@@ -143,4 +143,8 @@ class DatabaseService {
                 ))
             .toList());
   }
+
+  Future<void> updateUser(UserModel user) {
+    return _db.collection('users').doc(user.userId).update(user.toMap());
+  }
 }

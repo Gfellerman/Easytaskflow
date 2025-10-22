@@ -1,7 +1,8 @@
 import 'package:easy_task_flow/models/project_model.dart';
-import 'package:easy_task_flow/services/auth_service.dart';
-import 'package:easy_task_flow/models/project_model.dart';
+import 'package:easy_task_flow/screens/messages_screen.dart';
 import 'package:easy_task_flow/screens/project_detail_screen.dart';
+import 'package:easy_task_flow/screens/projects_screen.dart';
+import 'package:easy_task_flow/screens/settings_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:flutter/material.dart';
@@ -15,129 +16,43 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _authService = AuthService();
-  final DatabaseService _databaseService = DatabaseService();
-  final TextEditingController _projectNameController = TextEditingController();
+  int _selectedIndex = 0;
 
-  void _showCreateProjectDialog(int projectCount) {
-    if (projectCount >= 50) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Limit Reached'),
-          content: const Text('You have reached the maximum limit of 50 projects.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
+  static const List<Widget> _widgetOptions = <Widget>[
+    ProjectsScreen(),
+    MessagesScreen(),
+    SettingsScreen(),
+  ];
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('New Project'),
-          content: TextField(
-            controller: _projectNameController,
-            decoration: const InputDecoration(hintText: 'Project Name'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (_projectNameController.text.isNotEmpty) {
-                  final user = _authService.currentUser;
-                  if (user != null) {
-                    final newProject = ProjectModel(
-                      projectId: const Uuid().v4(),
-                      projectName: _projectNameController.text,
-                      ownerId: user.uid,
-                      memberIds: [user.uid],
-                    );
-                    await _databaseService.createProject(newProject);
-                    _projectNameController.clear();
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      },
-    );
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = _authService.currentUser;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Projects'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await _authService.signOut();
-              // The AuthWrapper will handle navigation
-            },
-          )
-        ],
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      body: user == null
-          ? const Center(child: Text('Not logged in.'))
-          : StreamBuilder<List<ProjectModel>>(
-              stream: _databaseService.getProjects(user.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No projects yet.'));
-                }
-                final projects = snapshot.data!;
-                return ListView.builder(
-                  itemCount: projects.length,
-                  itemBuilder: (context, index) {
-                    final project = projects[index];
-                    return ListTile(
-                      title: Text(project.projectName),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProjectDetailScreen(project: project),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-      floatingActionButton: StreamBuilder<List<ProjectModel>>(
-        stream: _databaseService.getProjects(user.uid),
-        builder: (context, snapshot) {
-          return FloatingActionButton(
-            onPressed: () {
-              final projectCount = snapshot.data?.length ?? 0;
-              _showCreateProjectDialog(projectCount);
-            },
-            child: const Icon(Icons.add),
-          );
-        }
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.folder),
+            label: 'Projects',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.message),
+            label: 'Messages',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }

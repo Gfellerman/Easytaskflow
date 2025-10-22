@@ -23,6 +23,7 @@ dependencies:
   google_sign_in: ^6.2.1
   googleapis: ^13.1.0
   googleapis_auth: ^1.6.0
+  url_launcher: ^6.3.0
 
   # Monetization
   google_mobile_ads: ^5.1.0

@@ -5,6 +5,8 @@ import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
+import 'package:easy_task_flow/services/google_api_service.dart';
+import 'package:easy_task_flow/widgets/banner_ad_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -21,6 +23,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final TextEditingController _emailController = TextEditingController();
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
+  final GoogleApiService _googleApiService = GoogleApiService();
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   DateTime? _dueDate;
@@ -107,6 +110,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     subtasks: [],
                   );
                   await _databaseService.createTask(widget.project.projectId, newTask);
+
+                  // Add event to Google Calendar
+                  if (_googleApiService.currentUser != null) {
+                    await _googleApiService.insertEvent(
+                      newTask.taskName,
+                      _dueDate!,
+                      _dueDate!.add(const Duration(hours: 1)),
+                    );
+                  }
+
                   _taskNameController.clear();
                   _dueDate = null;
                   Navigator.pop(context);
@@ -310,6 +323,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           onPressed: _showCreateTaskDialog,
           child: const Icon(Icons.add),
         ),
+        bottomNavigationBar: const BannerAdWidget(),
       ),
     );
   }
