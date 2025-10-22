@@ -3,11 +3,15 @@ import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
 import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
+import 'package:easy_task_flow/screens/project_calendar_screen.dart';
+import 'package:easy_task_flow/screens/task_detail_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
+import 'package:easy_task_flow/services/dynamic_link_service.dart';
 import 'package:easy_task_flow/services/google_api_service.dart';
 import 'package:easy_task_flow/widgets/banner_ad_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
@@ -24,10 +28,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
   final GoogleApiService _googleApiService = GoogleApiService();
+  final DynamicLinkService _dynamicLinkService = DynamicLinkService();
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   DateTime? _dueDate;
   List<String> _selectedAssignees = [];
+  late Future<List<UserModel?>> _membersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _membersFuture = Future.wait(
+      widget.project.memberIds.map((memberId) => _databaseService.getUserById(memberId)),
+    );
+  }
 
   void _showCreateTaskDialog() {
     _selectedAssignees = [];
@@ -113,11 +127,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
                   // Add event to Google Calendar
                   if (_googleApiService.currentUser != null) {
-                    await _googleApiService.insertEvent(
-                      newTask.taskName,
-                      _dueDate!,
-                      _dueDate!.add(const Duration(hours: 1)),
-                    );
+                    for (final assigneeId in _selectedAssignees) {
+                      final assignee = await _databaseService.getUserById(assigneeId);
+                      if (assignee != null) {
+                        await _googleApiService.insertEvent(
+                          newTask.taskName,
+                          _dueDate!,
+                          _dueDate!.add(const Duration(hours: 1)),
+                          assignee.email,
+                        );
+                      }
+                    }
                   }
 
                   _taskNameController.clear();
@@ -165,9 +185,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       );
                     }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User not found')),
-                    );
+                    final dynamicLink =
+                        await _dynamicLinkService.createDynamicLink(widget.project.projectId);
+                    Share.share('Join my project on EasyTaskFlow! $dynamicLink');
                   }
                   _emailController.clear();
                   Navigator.pop(context);
@@ -184,7 +204,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.project.projectName),
@@ -197,6 +217,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Tasks'),
+              Tab(text: 'Calendar'),
               Tab(text: 'Members'),
               Tab(text: 'Messages'),
             ],
@@ -225,29 +246,45 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     return ListTile(
                       title: Text(task.taskName),
                       subtitle: Text('Due: ${task.dueDate.toDate()}'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TaskDetailScreen(
+                              projectId: widget.project.projectId,
+                              task: task,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
             ),
+            // Calendar View
+            ProjectCalendarScreen(projectId: widget.project.projectId),
             // Members View
-            ListView.builder(
-              itemCount: widget.project.memberIds.length,
-              itemBuilder: (context, index) {
-                final userId = widget.project.memberIds[index];
-                return FutureBuilder<UserModel?>(
-                  future: _databaseService.getUserById(userId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const ListTile(title: Text('Loading...'));
-                    }
-                    if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-                      return const ListTile(title: Text('Error loading user'));
-                    }
-                    final user = snapshot.data!;
+            FutureBuilder<List<UserModel?>>(
+              future: _membersFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No members yet.'));
+                }
+                final members = snapshot.data!;
+                return ListView.builder(
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final member = members[index];
                     return ListTile(
-                      title: Text(user.name),
-                      subtitle: Text(user.email),
+                      title: Text(member?.name ?? 'Unknown'),
+                      subtitle: Text(member?.email ?? 'Unknown'),
                     );
                   },
                 );
@@ -306,7 +343,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                                 message: _messageController.text,
                                 timestamp: Timestamp.now(),
                               );
-                              await _databaseService.sendMessage(widget.project.projectId, newMessage);
+                              await _databaseService.sendMessage(
+                                  widget.project.projectId, newMessage);
                               _messageController.clear();
                             }
                           }
@@ -318,10 +356,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               ],
             ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showCreateTaskDialog,
-          child: const Icon(Icons.add),
         ),
         bottomNavigationBar: const BannerAdWidget(),
       ),

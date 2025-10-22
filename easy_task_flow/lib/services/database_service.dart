@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_task_flow/models/file_model.dart';
 import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
 import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -28,6 +32,28 @@ class DatabaseService {
                   memberIds: List<String>.from(doc['memberIds']),
                 ))
             .toList());
+  }
+
+  Stream<MessageModel?> getMostRecentMessage(String projectId) {
+    return _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        return MessageModel(
+          messageId: doc.id,
+          senderId: doc['senderId'],
+          message: doc['message'],
+          timestamp: doc['timestamp'],
+        );
+      }
+      return null;
+    });
   }
 
   Future<UserModel?> getUserByEmail(String email) async {
@@ -146,5 +172,42 @@ class DatabaseService {
 
   Future<void> updateUser(UserModel user) {
     return _db.collection('users').doc(user.userId).update(user.toMap());
+  }
+
+  // File methods
+  Future<String> uploadFile(String filePath, String fileName) async {
+    final ref = FirebaseStorage.instance.ref('uploads/$fileName');
+    final uploadTask = ref.putFile(File(filePath));
+    final snapshot = await uploadTask.whenComplete(() => {});
+    return await snapshot.ref.getDownloadURL();
+  }
+
+  Future<void> addFileToTask(String projectId, String taskId, FileModel file) {
+    return _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('files')
+        .doc(file.fileId)
+        .set(file.toMap());
+  }
+
+  Stream<List<FileModel>> getFilesForTask(String projectId, String taskId) {
+    return _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('files')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => FileModel(
+                  fileId: doc.id,
+                  fileName: doc['fileName'],
+                  fileUrl: doc['fileUrl'],
+                  fileType: doc['fileType'],
+                ))
+            .toList());
   }
 }

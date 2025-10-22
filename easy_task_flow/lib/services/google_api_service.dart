@@ -26,7 +26,7 @@ class GoogleApiService {
     return AuthenticatedClient(headers);
   }
 
-  Future<void> insertEvent(String title, DateTime startTime, DateTime endTime) async {
+  Future<void> insertEvent(String title, DateTime startTime, DateTime endTime, String calendarId) async {
     final client = await getHttpClient();
     final calApi = calendar.CalendarApi(client);
 
@@ -35,8 +35,16 @@ class GoogleApiService {
       ..start = calendar.EventDateTime(dateTime: startTime.toUtc())
       ..end = calendar.EventDateTime(dateTime: endTime.toUtc());
 
-    await calApi.events.insert(event, 'primary');
+    await calApi.events.insert(event, calendarId);
     client.close();
+  }
+
+  Future<drive.FileList> searchFiles(String query) async {
+    final client = await getHttpClient();
+    final driveApi = drive.DriveApi(client);
+    final fileList = await driveApi.files.list(q: query);
+    client.close();
+    return fileList;
   }
 }
 

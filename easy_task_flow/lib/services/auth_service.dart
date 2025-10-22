@@ -1,4 +1,6 @@
+import 'package:easy_task_flow/utils/dialogs.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -12,29 +14,29 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // Sign in with email and password
-  Future<UserCredential?> signInWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential?> signInWithEmailAndPassword(
+      BuildContext context, String email, String password) async {
     try {
       return await _auth.signInWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      // Handle error
-      print(e);
+      showErrorDialog(context, e.message ?? 'An unknown error occurred.');
       return null;
     }
   }
 
   // Sign up with email and password
-  Future<UserCredential?> signUpWithEmailAndPassword(String email, String password) async {
+  Future<UserCredential?> signUpWithEmailAndPassword(
+      BuildContext context, String email, String password) async {
     try {
       return await _auth.createUserWithEmailAndPassword(email: email, password: password);
     } on FirebaseAuthException catch (e) {
-      // Handle error
-      print(e);
+      showErrorDialog(context, e.message ?? 'An unknown error occurred.');
       return null;
     }
   }
 
   // Sign in with Google
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle(BuildContext context) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -47,8 +49,7 @@ class AuthService {
       );
       return await _auth.signInWithCredential(credential);
     } on FirebaseAuthException catch (e) {
-      // Handle error
-      print(e);
+      showErrorDialog(context, e.message ?? 'An unknown error occurred.');
       return null;
     }
   }

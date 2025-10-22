@@ -78,6 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final userCredential = await _authService.signUpWithEmailAndPassword(
+                      context,
                       _emailController.text,
                       _passwordController.text,
                     );

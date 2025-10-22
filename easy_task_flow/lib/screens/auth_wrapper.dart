@@ -1,5 +1,5 @@
 import 'package:easy_task_flow/screens/home_screen.dart';
-import 'package.easy_task_flow/screens/login_screen.dart';
+import 'package:easy_task_flow/screens/login_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
