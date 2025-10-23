@@ -7,56 +7,70 @@ class GoogleApiService {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
       calendar.CalendarApi.calendarScope,
-      drive.DriveApi.driveFileScope,
+      drive.DriveApi.driveReadonlyScope,
     ],
   );
 
-  GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
-
-  Future<GoogleSignInAccount?> signIn() async {
-    return await _googleSignIn.signIn();
+  Future<void> signIn() async {
+    try {
+      await _googleSignIn.signIn();
+    } catch (error) {
+      print('Error signing in with Google: $error');
+    }
   }
 
   Future<void> signOut() async {
     await _googleSignIn.signOut();
   }
 
-  Future<http.Client> getHttpClient() async {
-    final headers = await _googleSignIn.currentUser!.authHeaders;
-    return AuthenticatedClient(headers);
+  Future<bool> isSignedIn() async {
+    return await _googleSignIn.isSignedIn();
   }
 
-  Future<void> insertEvent(String title, DateTime startTime, DateTime endTime, String calendarId) async {
-    final client = await getHttpClient();
-    final calApi = calendar.CalendarApi(client);
+  Future<void> addTaskToCalendar(
+      String taskName, DateTime startTime, DateTime endTime) async {
+    final googleUser = await _googleSignIn.signInSilently();
+    if (googleUser == null) {
+      // User is not signed in, or needs to sign in again.
+      return;
+    }
 
-    final event = calendar.Event()
-      ..summary = title
-      ..start = calendar.EventDateTime(dateTime: startTime.toUtc())
-      ..end = calendar.EventDateTime(dateTime: endTime.toUtc());
+    final authHeaders = await googleUser.authHeaders;
+    final httpClient = GoogleAuthClient(authHeaders);
+    final calendarApi = calendar.CalendarApi(httpClient);
 
-    await calApi.events.insert(event, calendarId);
-    client.close();
+    final event = calendar.Event(
+      summary: taskName,
+      start: calendar.EventDateTime(dateTime: startTime),
+      end: calendar.EventDateTime(dateTime: endTime),
+    );
+
+    await calendarApi.events.insert(event, 'primary');
   }
 
   Future<drive.FileList> searchFiles(String query) async {
-    final client = await getHttpClient();
-    final driveApi = drive.DriveApi(client);
-    final fileList = await driveApi.files.list(q: query);
-    client.close();
-    return fileList;
+    final googleUser = await _googleSignIn.signInSilently();
+    if (googleUser == null) {
+      throw Exception('User not signed in to Google');
+    }
+
+    final authHeaders = await googleUser.authHeaders;
+    final httpClient = GoogleAuthClient(authHeaders);
+    final driveApi = drive.DriveApi(httpClient);
+
+    return await driveApi.files.list(q: "name contains '$query'");
   }
 }
 
-class AuthenticatedClient extends http.BaseClient {
-  final http.Client _inner = http.Client();
+class GoogleAuthClient extends http.BaseClient {
   final Map<String, String> _headers;
+  final http.Client _client = http.Client();
 
-  AuthenticatedClient(this._headers);
+  GoogleAuthClient(this._headers);
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers.addAll(_headers);
-    return _inner.send(request);
+    return _client.send(request);
   }
 }

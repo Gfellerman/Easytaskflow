@@ -10,13 +10,38 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  Future<void> addUser(UserModel user) {
-    return _db.collection('users').doc(user.userId).set(user.toMap());
+  // User methods
+  Future<void> createUser(UserModel user) async {
+    await _db.collection('users').doc(user.userId).set(user.toJson());
   }
 
-  Future<void> createProject(ProjectModel project) {
-    return _db.collection('projects').doc(project.projectId).set(project.toMap());
+  Future<UserModel?> getUserById(String userId) async {
+    final doc = await _db.collection('users').doc(userId).get();
+    return doc.exists ? UserModel.fromJson(doc.data()!) : null;
+  }
+
+  Future<UserModel?> getUserByEmail(String email) async {
+    final query =
+        await _db.collection('users').where('email', isEqualTo: email).get();
+    if (query.docs.isNotEmpty) {
+      return UserModel.fromJson(query.docs.first.data());
+    }
+    return null;
+  }
+
+  Future<bool> doesUserExist(String userId) async {
+    final doc = await _db.collection('users').doc(userId).get();
+    return doc.exists;
+  }
+
+  // Project methods
+  Future<void> createProject(ProjectModel project) async {
+    await _db
+        .collection('projects')
+        .doc(project.projectId)
+        .set(project.toJson());
   }
 
   Stream<List<ProjectModel>> getProjects(String userId) {
@@ -25,81 +50,24 @@ class DatabaseService {
         .where('memberIds', arrayContains: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ProjectModel(
-                  projectId: doc.id,
-                  projectName: doc['projectName'],
-                  ownerId: doc['ownerId'],
-                  memberIds: List<String>.from(doc['memberIds']),
-                ))
+            .map((doc) => ProjectModel.fromJson(doc.data()))
             .toList());
   }
 
-  Stream<MessageModel?> getMostRecentMessage(String projectId) {
-    return _db
-        .collection('projects')
-        .doc(projectId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .limit(1)
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        final doc = snapshot.docs.first;
-        return MessageModel(
-          messageId: doc.id,
-          senderId: doc['senderId'],
-          message: doc['message'],
-          timestamp: doc['timestamp'],
-        );
-      }
-      return null;
-    });
-  }
-
-  Future<UserModel?> getUserByEmail(String email) async {
-    final snapshot = await _db.collection('users').where('email', isEqualTo: email).get();
-    if (snapshot.docs.isNotEmpty) {
-      final data = snapshot.docs.first.data();
-      return UserModel(
-        userId: data['userId'],
-        name: data['name'],
-        email: data['email'],
-        phoneNumber: data['phoneNumber'],
-        profilePictureUrl: data['profilePictureUrl'],
-      );
-    }
-    return null;
-  }
-
-  Future<void> addUserToProject(String projectId, String userId) {
-    return _db.collection('projects').doc(projectId).update({
+  Future<void> addMemberToProject(String projectId, String userId) async {
+    await _db.collection('projects').doc(projectId).update({
       'memberIds': FieldValue.arrayUnion([userId])
     });
   }
 
-  Future<UserModel?> getUserById(String userId) async {
-    final doc = await _db.collection('users').doc(userId).get();
-    if (doc.exists) {
-      final data = doc.data()!;
-      return UserModel(
-        userId: data['userId'],
-        name: data['name'],
-        email: data['email'],
-        phoneNumber: data['phoneNumber'],
-        profilePictureUrl: data['profilePictureUrl'],
-      );
-    }
-    return null;
-  }
-
   // Task methods
-  Future<void> createTask(String projectId, TaskModel task) {
-    return _db
+  Future<void> createTask(String projectId, TaskModel task) async {
+    await _db
         .collection('projects')
         .doc(projectId)
         .collection('tasks')
         .doc(task.taskId)
-        .set(task.toMap());
+        .set(task.toJson());
   }
 
   Stream<List<TaskModel>> getTasks(String projectId) {
@@ -109,48 +77,26 @@ class DatabaseService {
         .collection('tasks')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => TaskModel(
-                  taskId: doc.id,
-                  taskName: doc['taskName'],
-                  dueDate: doc['dueDate'],
-                  assignees: List<String>.from(doc['assignees']),
-                  taskDetails: doc['taskDetails'],
-                  subtasks: (doc['subtasks'] as List)
-                      .map((subtask) => SubtaskModel(
-                            subtaskName: subtask['subtaskName'],
-                            subtaskDetails: subtask['subtaskDetails'],
-                          ))
-                      .toList(),
-                ))
+            .map((doc) => TaskModel.fromJson(doc.data()))
             .toList());
   }
 
-  Future<void> updateTask(String projectId, TaskModel task) {
-    return _db
+  Future<void> updateTask(String projectId, TaskModel task) async {
+    await _db
         .collection('projects')
         .doc(projectId)
         .collection('tasks')
         .doc(task.taskId)
-        .update(task.toMap());
-  }
-
-  Future<void> deleteTask(String projectId, String taskId) {
-    return _db
-        .collection('projects')
-        .doc(projectId)
-        .collection('tasks')
-        .doc(taskId)
-        .delete();
+        .update(task.toJson());
   }
 
   // Message methods
-  Future<void> sendMessage(String projectId, MessageModel message) {
-    return _db
+  Future<void> sendMessage(String projectId, MessageModel message) async {
+    await _db
         .collection('projects')
         .doc(projectId)
         .collection('messages')
-        .doc(message.messageId)
-        .set(message.toMap());
+        .add(message.toJson());
   }
 
   Stream<List<MessageModel>> getMessages(String projectId) {
@@ -161,36 +107,28 @@ class DatabaseService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => MessageModel(
-                  messageId: doc.id,
-                  senderId: doc['senderId'],
-                  message: doc['message'],
-                  timestamp: doc['timestamp'],
-                ))
+            .map((doc) => MessageModel.fromJson(doc.data()))
             .toList());
-  }
-
-  Future<void> updateUser(UserModel user) {
-    return _db.collection('users').doc(user.userId).update(user.toMap());
   }
 
   // File methods
   Future<String> uploadFile(String filePath, String fileName) async {
-    final ref = FirebaseStorage.instance.ref('uploads/$fileName');
-    final uploadTask = ref.putFile(File(filePath));
-    final snapshot = await uploadTask.whenComplete(() => {});
-    return await snapshot.ref.getDownloadURL();
+    final file = File(filePath);
+    final ref = _storage.ref().child('task_documents/$fileName');
+    final uploadTask = await ref.putFile(file);
+    return await uploadTask.ref.getDownloadURL();
   }
 
-  Future<void> addFileToTask(String projectId, String taskId, FileModel file) {
-    return _db
+  Future<void> addFileToTask(
+      String projectId, String taskId, FileModel file) async {
+    await _db
         .collection('projects')
         .doc(projectId)
         .collection('tasks')
         .doc(taskId)
         .collection('files')
         .doc(file.fileId)
-        .set(file.toMap());
+        .set(file.toJson());
   }
 
   Stream<List<FileModel>> getFilesForTask(String projectId, String taskId) {
@@ -202,12 +140,7 @@ class DatabaseService {
         .collection('files')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => FileModel(
-                  fileId: doc.id,
-                  fileName: doc['fileName'],
-                  fileUrl: doc['fileUrl'],
-                  fileType: doc['fileType'],
-                ))
+            .map((doc) => FileModel.fromJson(doc.data()))
             .toList());
   }
 }
