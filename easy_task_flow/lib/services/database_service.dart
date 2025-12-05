@@ -31,6 +31,10 @@ class DatabaseService {
     return null;
   }
 
+  Future<void> updateUser(UserModel user) async {
+    await _db.collection('users').doc(user.userId).update(user.toJson());
+  }
+
   Future<bool> doesUserExist(String userId) async {
     final doc = await _db.collection('users').doc(userId).get();
     return doc.exists;
@@ -58,6 +62,10 @@ class DatabaseService {
     await _db.collection('projects').doc(projectId).update({
       'memberIds': FieldValue.arrayUnion([userId])
     });
+  }
+
+  Future<void> deleteProject(String projectId) async {
+    await _db.collection('projects').doc(projectId).delete();
   }
 
   // Task methods
@@ -88,6 +96,15 @@ class DatabaseService {
         .collection('tasks')
         .doc(task.taskId)
         .update(task.toJson());
+  }
+
+  Future<void> deleteTask(String projectId, String taskId) async {
+    await _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .delete();
   }
 
   // Message methods

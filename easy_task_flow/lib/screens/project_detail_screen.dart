@@ -32,6 +32,34 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
   DateTime? _dueDate;
+
+  void _deleteProject() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Project'),
+        content: const Text('Are you sure you want to delete this project? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _databaseService.deleteProject(widget.project.projectId);
+      if (mounted) {
+        Navigator.pop(context); // Go back to projects list
+      }
+    }
+  }
   List<String> _selectedAssignees = [];
   late Future<List<UserModel?>> _membersFuture;
 
@@ -179,7 +207,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         const SnackBar(content: Text('User is already in this project')),
                       );
                     } else {
-                      await _databaseService.addUserToProject(widget.project.projectId, user.userId);
+                      await _databaseService.addMemberToProject(widget.project.projectId, user.userId);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('User invited successfully')),
                       );
@@ -212,6 +240,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             IconButton(
               icon: const Icon(Icons.person_add),
               onPressed: _showInviteDialog,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteProject,
             ),
           ],
           bottom: const TabBar(
