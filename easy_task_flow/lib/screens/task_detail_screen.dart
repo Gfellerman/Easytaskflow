@@ -30,6 +30,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final TextEditingController _subtaskDetailsController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
+  void _deleteTask() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: const Text('Are you sure you want to delete this task? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _databaseService.deleteTask(widget.projectId, widget.task.taskId);
+      if (mounted) {
+        Navigator.pop(context); // Go back to project details
+      }
+    }
+  }
+
   void _showAddSubtaskDialog(TaskModel currentTask) {
     showDialog(
       context: context,
@@ -174,6 +202,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.task.taskName),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteTask,
+            ),
+          ],
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Details'),
