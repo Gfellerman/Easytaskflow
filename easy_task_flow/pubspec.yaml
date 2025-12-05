@@ -33,7 +33,6 @@ dependencies:
   flutter_riverpod: ^2.5.1
 
   # Utilities
-  url_launcher: ^6.3.0
   uuid: ^4.4.0
   file_picker: ^8.0.0+1
   table_calendar: ^3.1.0
