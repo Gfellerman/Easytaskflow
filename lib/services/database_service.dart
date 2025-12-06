@@ -17,6 +17,11 @@ class DatabaseService {
     await _db.collection('users').doc(user.userId).set(user.toJson());
   }
 
+  // Alias for signup_screen
+  Future<void> addUser(UserModel user) async {
+    return createUser(user);
+  }
+
   Future<UserModel?> getUserById(String userId) async {
     final doc = await _db.collection('users').doc(userId).get();
     return doc.exists ? UserModel.fromJson(doc.data()!) : null;
@@ -126,6 +131,22 @@ class DatabaseService {
         .map((snapshot) => snapshot.docs
             .map((doc) => MessageModel.fromJson(doc.data()))
             .toList());
+  }
+
+  Stream<MessageModel?> getMostRecentMessage(String projectId) {
+    return _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        return MessageModel.fromJson(snapshot.docs.first.data());
+      }
+      return null;
+    });
   }
 
   // File methods

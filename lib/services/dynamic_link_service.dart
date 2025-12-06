@@ -6,10 +6,10 @@ class DynamicLinkService {
       uriPrefix: 'https://easytaskflow.page.link',
       link: Uri.parse('https://easytaskflow.com/project?id=$projectId'),
       androidParameters: const AndroidParameters(
-        packageName: 'com.example.easy_task_flow',
+        packageName: 'com.easytaskflow.app',
         minimumVersion: 1,
       ),
-      iosParameters: const IosParameters(
+      iosParameters: const IOSParameters(
         bundleId: 'com.example.easyTaskFlow',
         minimumVersion: '1',
         appStoreId: '123456789',

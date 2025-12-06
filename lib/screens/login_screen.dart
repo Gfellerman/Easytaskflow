@@ -53,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final userCredential = await _authService.signInWithEmailAndPassword(
-                      context,
                       _emailController.text,
                       _passwordController.text,
                     );
@@ -67,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  final userCredential = await _authService.signInWithGoogle(context);
+                  final userCredential = await _authService.signInWithGoogle();
                   if (userCredential != null) {
                     Navigator.pushReplacementNamed(context, '/home');
                   }
