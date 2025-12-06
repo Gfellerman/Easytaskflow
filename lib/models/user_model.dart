@@ -13,7 +13,7 @@ class UserModel {
     this.profilePictureUrl,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'userId': userId,
       'name': name,
@@ -21,5 +21,15 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'profilePictureUrl': profilePictureUrl,
     };
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      userId: json['userId'],
+      name: json['name'],
+      email: json['email'],
+      phoneNumber: json['phoneNumber'],
+      profilePictureUrl: json['profilePictureUrl'],
+    );
   }
 }

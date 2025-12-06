@@ -11,6 +11,8 @@ class GoogleApiService {
     ],
   );
 
+  GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
+
   Future<void> signIn() async {
     try {
       await _googleSignIn.signIn();
@@ -27,8 +29,9 @@ class GoogleApiService {
     return await _googleSignIn.isSignedIn();
   }
 
-  Future<void> addTaskToCalendar(
-      String taskName, DateTime startTime, DateTime endTime) async {
+  // Renamed from addTaskToCalendar and added attendeeEmail
+  Future<void> insertEvent(
+      String taskName, DateTime startTime, DateTime endTime, String? attendeeEmail) async {
     final googleUser = await _googleSignIn.signInSilently();
     if (googleUser == null) {
       // User is not signed in, or needs to sign in again.
@@ -39,10 +42,16 @@ class GoogleApiService {
     final httpClient = GoogleAuthClient(authHeaders);
     final calendarApi = calendar.CalendarApi(httpClient);
 
+    List<calendar.EventAttendee>? attendees;
+    if (attendeeEmail != null) {
+      attendees = [calendar.EventAttendee(email: attendeeEmail)];
+    }
+
     final event = calendar.Event(
       summary: taskName,
       start: calendar.EventDateTime(dateTime: startTime),
       end: calendar.EventDateTime(dateTime: endTime),
+      attendees: attendees,
     );
 
     await calendarApi.events.insert(event, 'primary');

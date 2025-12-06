@@ -11,12 +11,21 @@ class ProjectModel {
     required this.memberIds,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'projectId': projectId,
       'projectName': projectName,
       'ownerId': ownerId,
       'memberIds': memberIds,
     };
+  }
+
+  factory ProjectModel.fromJson(Map<String, dynamic> json) {
+    return ProjectModel(
+      projectId: json['projectId'],
+      projectName: json['projectName'],
+      ownerId: json['ownerId'],
+      memberIds: List<String>.from(json['memberIds']),
+    );
   }
 }

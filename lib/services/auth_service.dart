@@ -1,6 +1,7 @@
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart'; // Added for BuildContext if needed, though unused in param type usually
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -10,6 +11,9 @@ class AuthService {
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  User? get currentUser => _auth.currentUser;
+
+  // Existing method
   Future<User?> signInWithEmail(String email, String password) async {
     try {
       final result = await _auth.signInWithEmailAndPassword(
@@ -23,6 +27,21 @@ class AuthService {
     }
   }
 
+  // Missing method called by login_screen
+  Future<UserCredential?> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      final result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // Existing method
   Future<User?> signUpWithEmail(
     String email,
     String password,
@@ -46,6 +65,25 @@ class AuthService {
         await _databaseService.createUser(newUser);
       }
       return user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // Missing method called by signup_screen
+  // It takes context, but ignores it or uses it for something? Screen passed it.
+  Future<UserCredential?> signUpWithEmailAndPassword(
+    BuildContext context,
+    String email,
+    String password,
+  ) async {
+    try {
+      final result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result;
     } catch (e) {
       print(e.toString());
       return null;

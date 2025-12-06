@@ -11,12 +11,21 @@ class FileModel {
     required this.fileType,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'fileId': fileId,
       'fileName': fileName,
       'fileUrl': fileUrl,
       'fileType': fileType,
     };
+  }
+
+  factory FileModel.fromJson(Map<String, dynamic> json) {
+    return FileModel(
+      fileId: json['fileId'],
+      fileName: json['fileName'],
+      fileUrl: json['fileUrl'],
+      fileType: json['fileType'],
+    );
   }
 }

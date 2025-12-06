@@ -13,12 +13,21 @@ class MessageModel {
     required this.timestamp,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'messageId': messageId,
       'senderId': senderId,
       'message': message,
       'timestamp': timestamp,
     };
+  }
+
+  factory MessageModel.fromJson(Map<String, dynamic> json) {
+    return MessageModel(
+      messageId: json['messageId'],
+      senderId: json['senderId'],
+      message: json['message'],
+      timestamp: json['timestamp'],
+    );
   }
 }
