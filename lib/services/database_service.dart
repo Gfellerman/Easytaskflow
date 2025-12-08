@@ -128,6 +128,22 @@ class DatabaseService {
             .toList());
   }
 
+  Stream<MessageModel?> getMostRecentMessage(String projectId) {
+    return _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        return MessageModel.fromJson(snapshot.docs.first.data());
+      }
+      return null;
+    });
+  }
+
   // File methods
   Future<String> uploadFile(String filePath, String fileName) async {
     final file = File(filePath);

@@ -77,20 +77,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final userCredential = await _authService.signUpWithEmailAndPassword(
-                      context,
+                    final user = await _authService.signUpWithEmailAndPassword(
                       _emailController.text,
                       _passwordController.text,
+                      _nameController.text,
+                      _phoneNumberController.text,
                     );
-                    if (userCredential != null) {
-                      final user = UserModel(
-                        userId: userCredential.user!.uid,
-                        name: _nameController.text,
-                        email: _emailController.text,
-                        phoneNumber: _phoneNumberController.text,
-                      );
-                      await _databaseService.addUser(user);
-                      Navigator.pushReplacementNamed(context, '/home');
+                    if (user != null) {
+                      if (context.mounted) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
                     }
                   }
                 },

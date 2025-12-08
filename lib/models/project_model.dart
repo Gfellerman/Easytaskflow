@@ -19,4 +19,15 @@ class ProjectModel {
       'memberIds': memberIds,
     };
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory ProjectModel.fromJson(Map<String, dynamic> json) {
+    return ProjectModel(
+      projectId: json['projectId'] ?? '',
+      projectName: json['projectName'] ?? '',
+      ownerId: json['ownerId'] ?? '',
+      memberIds: List<String>.from(json['memberIds'] ?? []),
+    );
+  }
 }

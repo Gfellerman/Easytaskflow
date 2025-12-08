@@ -19,4 +19,15 @@ class FileModel {
       'fileType': fileType,
     };
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory FileModel.fromJson(Map<String, dynamic> json) {
+    return FileModel(
+      fileId: json['fileId'] ?? '',
+      fileName: json['fileName'] ?? '',
+      fileUrl: json['fileUrl'] ?? '',
+      fileType: json['fileType'] ?? '',
+    );
+  }
 }
