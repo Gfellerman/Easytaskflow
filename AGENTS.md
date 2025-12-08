@@ -1,37 +1,67 @@
 # Jules Context & Instructions
 
 ## 1. Project Overview
-* **App Name:** EasyTaskFlow
-* **Goal:** A collaborative project management mobile app (Android/iOS). It allows users (solo or teams) to create projects, assign tasks, set deadlines, and chat via real-time messaging.
-* **Current Status:** ~70% complete but **CURRENTLY BROKEN**. The app does not compile.
+- **App Name:** EasyTaskFlow
+- **Goal:** A collaborative project management app for Android, iOS, and Web. Users can create projects, assign tasks, set deadlines, and chat in real time.
+- **Current Status:** ~70% complete but **CURRENTLY BROKEN**. The app does not compile and the build is failing.
 
 ## 2. User Context (CRITICAL)
-* **Role:** The Product Owner is **NOT a coder**.
-* **Communication:** Explain issues in plain English. Do not ask the user to manually edit code unless 100% necessary.
-* **Workflow:**
-    1.  Analyze the error.
-    2.  Fix the code yourself.
-    3.  **Verify** the fix by running `flutter analyze`.
-    4.  **COMMIT** the changes to the repository immediately so the user can sync.
+- **Role:** The Product Owner is **NOT a coder**.
+- **Communication:** Explain issues in plain English. Do **not** ask the user to manually edit code unless absolutely necessary.
+- **Workflow you MUST follow:**
+  1. Analyze the errors.
+  2. Fix the code yourself.
+  3. **Verify** by running:
+     - `flutter pub get`
+     - `flutter analyze`
+     - `flutter test` (if tests exist)
+     - `flutter build apk`
+  4. If commands fail, fix the problems and re-run them until they pass.
+  5. **COMMIT** the changes and push a branch / open a PR so the user can sync.
 
 ## 3. Tech Stack
-* **Frontend:** Flutter (Dart)
-* **Backend:** Firebase (Auth, Firestore, Storage)
-* **State Management:** Mixed (Riverpod + setState) - *Be careful here, this is a known source of bugs.*
-* **Key Dependencies:**
-    * `firebase_core`, `cloud_firestore`
-    * `google_mobile_ads` (AdMob)
-    * `googleapis` (Calendar sync)
+- **Frontend:** Flutter (Dart)
+- **Platforms:** Android, iOS, Web.
+- **Backend:** Firebase (Auth, Firestore, Storage).
+- **State Management:** Mixed (Riverpod + `setState`) — **be careful**, this is a known source of bugs.
+- **Key Dependencies:**
+  - `firebase_core`, `cloud_firestore`
+  - `google_mobile_ads` (AdMob)
+  - `googleapis` (Calendar sync)
 
-## 4. Immediate Priority: FIX THE BUILD
-**Do not add features.** The only goal right now is to make `flutter build apk` succeed.
+## 4. Build & Tooling
+- **SDK & Tooling:**
+  - Use a stable Flutter SDK compatible with `sdk: ">=3.0.0 <4.0.0"` in `pubspec.yaml`.
+  - Avoid deprecated Firebase packages (for example, older dynamic links packages) unless required.
+- **Required build commands (run in project root):**
+  - `flutter pub get`
+  - `flutter analyze`
+  - `flutter test` (if tests exist)
+  - `flutter build apk`
+- If Flutter is not installed in the environment, install it or use the environment where these commands already work.
 
-**Known Compilation Errors:**
-1.  **Naming Mismatch:** The code calls `addUserToProject` but the definition in `database_service.dart` is likely named `addMemberToProject`. **Action:** Rename the call to match the definition.
-2.  **Android Config:** `android/app/build.gradle.kts` is missing the `applicationId`. **Action:** Set it to `com.easytaskflow.app` (or similar).
-3.  **Pubspec:** Ensure `pubspec.yaml` uses a stable SDK version (`>=3.0.0 <4.0.0`) and does not use deprecated packages like dynamic links if possible.
+## 5. Immediate Priority: FIX THE BUILD
+- **Do not add new features.**
+- **Primary goal:** Make `flutter build apk` succeed without errors or analyzer warnings.
+- **Known issues to address first:**
+  1. **Naming mismatch:** Some code calls `addUserToProject` but `database_service.dart` defines `addMemberToProject` (or similar). Align the call and definition so they use a single, consistent name.
+  2. **Android config:** `android/app/build.gradle.kts` is missing the `applicationId`. Set it to `com.easytaskflow.app` (or the correct ID if specified elsewhere).
+  3. **Pubspec:** Ensure `pubspec.yaml`:
+     - Uses `sdk: ">=3.0.0 <4.0.0"` (or another stable range).
+     - Uses up‑to‑date, non‑deprecated Firebase and Google packages when possible.
 
-## 5. Coding Standards
-* **Structure:** The project is in the ROOT directory.
-* **Imports:** Always check that imports point to valid files.
-* **Safety:** Do not delete existing business logic. If a library is missing, install it (`flutter pub add`).
+## 6. Coding Standards
+- **Project structure:** Flutter project is in the **root** directory.
+- **Imports:** Always ensure imports reference real files; remove or fix broken imports.
+- **Safety:**
+  - Do **not** delete existing business logic unless it is clearly dead code and safe to remove.
+  - If a required package is missing, add it with `flutter pub add <package>` and update `pubspec.yaml` accordingly.
+- **Testing:**
+  - Prefer adding or updating tests rather than commenting them out.
+  - If you must temporarily disable a test, leave a clear TODO explaining why.
+
+## 7. When you are unsure
+- If a design choice is ambiguous, choose the safest option that:
+  - Keeps the current user flows working.
+  - Minimizes breaking changes to public APIs and data models.
+- Document any significant trade‑offs in code comments and the PR description.
