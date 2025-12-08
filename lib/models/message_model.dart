@@ -21,4 +21,15 @@ class MessageModel {
       'timestamp': timestamp,
     };
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory MessageModel.fromJson(Map<String, dynamic> json) {
+    return MessageModel(
+      messageId: json['messageId'] ?? '',
+      senderId: json['senderId'] ?? '',
+      message: json['message'] ?? '',
+      timestamp: json['timestamp'] ?? Timestamp.now(),
+    );
+  }
 }

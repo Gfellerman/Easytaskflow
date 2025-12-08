@@ -22,4 +22,16 @@ class UserModel {
       'profilePictureUrl': profilePictureUrl,
     };
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      userId: json['userId'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      profilePictureUrl: json['profilePictureUrl'],
+    );
+  }
 }

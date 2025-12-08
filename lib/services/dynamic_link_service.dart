@@ -9,7 +9,7 @@ class DynamicLinkService {
         packageName: 'com.example.easy_task_flow',
         minimumVersion: 1,
       ),
-      iosParameters: const IosParameters(
+      iosParameters: const IOSParameters(
         bundleId: 'com.example.easyTaskFlow',
         minimumVersion: '1',
         appStoreId: '123456789',

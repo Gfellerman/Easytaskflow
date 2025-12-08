@@ -52,13 +52,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final userCredential = await _authService.signInWithEmailAndPassword(
-                      context,
+                    final user = await _authService.signInWithEmailAndPassword(
                       _emailController.text,
                       _passwordController.text,
                     );
-                    if (userCredential != null) {
-                      Navigator.pushReplacementNamed(context, '/home');
+                    if (user != null) {
+                      if (context.mounted) {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
                     }
                   }
                 },
@@ -67,9 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
-                  final userCredential = await _authService.signInWithGoogle(context);
-                  if (userCredential != null) {
-                    Navigator.pushReplacementNamed(context, '/home');
+                  final user = await _authService.signInWithGoogle();
+                  if (user != null) {
+                    if (context.mounted) {
+                      Navigator.pushReplacementNamed(context, '/home');
+                    }
                   }
                 },
                 child: const Text('Sign in with Google'),

@@ -27,6 +27,26 @@ class GoogleApiService {
     return await _googleSignIn.isSignedIn();
   }
 
+  GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
+
+  Future<void> insertEvent(String title, DateTime startTime, DateTime endTime, String attendeeEmail) async {
+    final googleUser = await _googleSignIn.signInSilently();
+    if (googleUser == null) return;
+
+    final authHeaders = await googleUser.authHeaders;
+    final httpClient = GoogleAuthClient(authHeaders);
+    final calendarApi = calendar.CalendarApi(httpClient);
+
+    final event = calendar.Event(
+      summary: title,
+      start: calendar.EventDateTime(dateTime: startTime),
+      end: calendar.EventDateTime(dateTime: endTime),
+      attendees: [calendar.EventAttendee(email: attendeeEmail)],
+    );
+
+    await calendarApi.events.insert(event, 'primary');
+  }
+
   Future<void> addTaskToCalendar(
       String taskName, DateTime startTime, DateTime endTime) async {
     final googleUser = await _googleSignIn.signInSilently();

@@ -27,6 +27,22 @@ class TaskModel {
       'subtasks': subtasks.map((subtask) => subtask.toMap()).toList(),
     };
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory TaskModel.fromJson(Map<String, dynamic> json) {
+    return TaskModel(
+      taskId: json['taskId'] ?? '',
+      taskName: json['taskName'] ?? '',
+      dueDate: json['dueDate'] ?? Timestamp.now(),
+      assignees: List<String>.from(json['assignees'] ?? []),
+      taskDetails: json['taskDetails'] ?? '',
+      subtasks: (json['subtasks'] as List<dynamic>?)
+              ?.map((e) => SubtaskModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class SubtaskModel {
@@ -43,5 +59,14 @@ class SubtaskModel {
       'subtaskName': subtaskName,
       'subtaskDetails': subtaskDetails,
     };
+  }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory SubtaskModel.fromJson(Map<String, dynamic> json) {
+    return SubtaskModel(
+      subtaskName: json['subtaskName'] ?? '',
+      subtaskDetails: json['subtaskDetails'] ?? '',
+    );
   }
 }
