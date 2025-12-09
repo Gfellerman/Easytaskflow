@@ -65,3 +65,8 @@
   - Keeps the current user flows working.
   - Minimizes breaking changes to public APIs and data models.
 - Document any significant trade‑offs in code comments and the PR description.
+Validation Rules for Jules:
+- You CANNOT run `flutter analyze` in your environment. Never claim you ran it.
+- Treat my local `flutter analyze` output as the single source of truth.
+- After each change, I will paste errors; your job is to fix ONLY those lines/files.
+- Do not modify unrelated files or do broad refactors without an explicit request.
