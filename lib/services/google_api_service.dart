@@ -16,6 +16,7 @@ class GoogleApiService {
       await _googleSignIn.signIn();
     } catch (error) {
       print('Error signing in with Google: $error');
+      // print('Error signing in with Google: $error');
     }
   }
 

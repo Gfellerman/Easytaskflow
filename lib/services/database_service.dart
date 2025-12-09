@@ -176,4 +176,37 @@ class DatabaseService {
             .map((doc) => FileModel.fromJson(doc.data()))
             .toList());
   }
+
+  Future<bool> checkAndIncrementAiUsage(String userId) async {
+    final userDoc = await _db.collection('users').doc(userId).get();
+    if (!userDoc.exists) return false;
+
+    final data = userDoc.data()!;
+    final user = UserModel.fromJson(data);
+
+    final now = DateTime.now();
+    final lastDate = user.lastAiUsageDate?.toDate();
+
+    int currentCount = user.dailyAiUsageCount;
+
+    if (lastDate == null ||
+        lastDate.year != now.year ||
+        lastDate.month != now.month ||
+        lastDate.day != now.day) {
+      currentCount = 0;
+    }
+
+    final limit = user.subscriptionTier == 'Pro' ? 50 : 5;
+
+    if (currentCount >= limit) {
+      return false;
+    }
+
+    await _db.collection('users').doc(userId).update({
+      'dailyAiUsageCount': currentCount + 1,
+      'lastAiUsageDate': Timestamp.fromDate(now),
+    });
+
+    return true;
+  }
 }

@@ -26,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     _nameController.text = userData.name;
 
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) {
