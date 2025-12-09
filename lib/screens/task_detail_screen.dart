@@ -178,7 +178,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                   widget.task.taskId,
                                   newFile,
                                 );
-                                Navigator.pop(context);
+                                if (context.mounted) Navigator.pop(context);
                               },
                             );
                           },
@@ -241,7 +241,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         return Text(user.name);
                       },
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 10),
                   const Text('Details:'),
                   Text(widget.task.taskDetails),
@@ -302,8 +302,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         title: Text(file.fileName),
                         leading: const Icon(Icons.insert_drive_file),
                         onTap: () async {
-                          if (await canLaunch(file.fileUrl)) {
-                            await launch(file.fileUrl);
+                          final uri = Uri.parse(file.fileUrl);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
                           } else {
                             throw 'Could not launch ${file.fileUrl}';
                           }

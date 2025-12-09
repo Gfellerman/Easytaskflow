@@ -1,0 +1,35 @@
+{
+  "project_info": {
+    "project_number": "123456789",
+    "firebase_url": "https://dummy.firebaseio.com",
+    "project_id": "easy-task-flow-dummy",
+    "storage_bucket": "easy-task-flow-dummy.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789:android:abcdef",
+        "android_client_info": {
+          "package_name": "com.easytaskflow.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "dummy-client-id.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "dummy-api-key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

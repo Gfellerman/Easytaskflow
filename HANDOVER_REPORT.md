@@ -1,5 +1,7 @@
 # Handover Report
 
+**Status:** Build Fixed / Steps 1-2 Complete
+
 ## Architecture Overview
 
 The application is built using **Flutter** for cross-platform support (Android, iOS, Web).

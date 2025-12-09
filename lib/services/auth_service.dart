@@ -20,7 +20,7 @@ class AuthService {
       );
       return result.user;
     } catch (e) {
-      print(e.toString());
+      // // print(e.toString());
       return null;
     }
   }
@@ -49,7 +49,7 @@ class AuthService {
       }
       return user;
     } catch (e) {
-      print(e.toString());
+      // print(e.toString());
       return null;
     }
   }
@@ -83,7 +83,7 @@ class AuthService {
       }
       return user;
     } catch (e) {
-      print(e.toString());
+      // print(e.toString());
       return null;
     }
   }

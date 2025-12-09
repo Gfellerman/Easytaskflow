@@ -129,7 +129,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           );
                         },
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               );
@@ -170,7 +170,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
                   _taskNameController.clear();
                   _dueDate = null;
-                  Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Create'),
@@ -208,9 +208,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       );
                     } else {
                       await _databaseService.addMemberToProject(widget.project.projectId, user.userId);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User invited successfully')),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User invited successfully')),
+                        );
+                      }
                     }
                   } else {
                     final dynamicLink =
@@ -218,7 +220,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     Share.share('Join my project on EasyTaskFlow! $dynamicLink');
                   }
                   _emailController.clear();
-                  Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Invite'),
@@ -390,6 +392,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           ],
         ),
         bottomNavigationBar: const BannerAdWidget(),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showCreateTaskDialog,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
