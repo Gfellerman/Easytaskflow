@@ -32,13 +32,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final DynamicLinkService _dynamicLinkService = DynamicLinkService();
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
-  DateTime? _dueDate;
-  final AiService _aiService = AiService();
-  final TextEditingController _taskNameController = TextEditingController();
-  final TextEditingController _messageController = TextEditingController();
   final TextEditingController _quickAddController = TextEditingController();
   DateTime? _dueDate;
   bool _isAiLoading = false;
+  List<String> _selectedAssignees = [];
+  late Future<List<UserModel?>> _membersFuture;
+  final AiService _aiService = AiService();
 
   Future<void> _handleQuickAdd() async {
     final input = _quickAddController.text.trim();
@@ -127,8 +126,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       }
     }
   }
-  List<String> _selectedAssignees = [];
-  late Future<List<UserModel?>> _membersFuture;
 
   @override
   void initState() {
@@ -197,7 +194,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         },
                       );
                     }).toList(),
-                    }),
                   ],
                 ),
               );
@@ -280,11 +276,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('User invited successfully')),
                       );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('User invited successfully')),
-                        );
-                      }
                     }
                   } else {
                     final dynamicLink =
@@ -330,85 +321,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            // Tasks View
         body: Column(
           children: [
             Expanded(
               child: TabBarView(
                 children: [
                   // Tasks View
-            StreamBuilder<List<TaskModel>>(
-              stream: _databaseService.getTasks(widget.project.projectId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No tasks yet.'));
-                }
-                final tasks = snapshot.data!;
-                return ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    return ListTile(
-                      title: Text(task.taskName),
-                      subtitle: Text('Due: ${task.dueDate.toDate()}'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TaskDetailScreen(
-                              projectId: widget.project.projectId,
-                              task: task,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-            // Calendar View
-            ProjectCalendarScreen(projectId: widget.project.projectId),
-            // Members View
-            FutureBuilder<List<UserModel?>>(
-              future: _membersFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No members yet.'));
-                }
-                final members = snapshot.data!;
-                return ListView.builder(
-                  itemCount: members.length,
-                  itemBuilder: (context, index) {
-                    final member = members[index];
-                    return ListTile(
-                      title: Text(member?.name ?? 'Unknown'),
-                      subtitle: Text(member?.email ?? 'Unknown'),
-                    );
-                  },
-                );
-              },
-            ),
-            // Messages View
-            Column(
-              children: [
-                Expanded(
-                  child: StreamBuilder<List<MessageModel>>(
-                    stream: _databaseService.getMessages(widget.project.projectId),
+                  StreamBuilder<List<TaskModel>>(
+                    stream: _databaseService.getTasks(widget.project.projectId),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -417,60 +337,125 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         return Center(child: Text('Error: ${snapshot.error}'));
                       }
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No messages yet.'));
+                        return const Center(child: Text('No tasks yet.'));
                       }
-                      final messages = snapshot.data!;
+                      final tasks = snapshot.data!;
                       return ListView.builder(
-                        reverse: true,
-                        itemCount: messages.length,
+                        itemCount: tasks.length,
                         itemBuilder: (context, index) {
-                          final message = messages[index];
+                          final task = tasks[index];
                           return ListTile(
-                            title: Text(message.message),
-                            subtitle: Text(message.senderId),
+                            title: Text(task.taskName),
+                            subtitle: Text('Due: ${task.dueDate.toDate()}'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TaskDetailScreen(
+                                    projectId: widget.project.projectId,
+                                    task: task,
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       );
                     },
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
+                  // Calendar View
+                  ProjectCalendarScreen(projectId: widget.project.projectId),
+                  // Members View
+                  FutureBuilder<List<UserModel?>>(
+                    future: _membersFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No members yet.'));
+                      }
+                      final members = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: members.length,
+                        itemBuilder: (context, index) {
+                          final member = members[index];
+                          return ListTile(
+                            title: Text(member?.name ?? 'Unknown'),
+                            subtitle: Text(member?.email ?? 'Unknown'),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  // Messages View
+                  Column(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(hintText: 'Enter a message'),
+                        child: StreamBuilder<List<MessageModel>>(
+                          stream: _databaseService.getMessages(widget.project.projectId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            }
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Center(child: Text('No messages yet.'));
+                            }
+                            final messages = snapshot.data!;
+                            return ListView.builder(
+                              reverse: true,
+                              itemCount: messages.length,
+                              itemBuilder: (context, index) {
+                                final message = messages[index];
+                                return ListTile(
+                                  title: Text(message.message),
+                                  subtitle: Text(message.senderId),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () async {
-                          if (_messageController.text.isNotEmpty) {
-                            final user = _authService.currentUser;
-                            if (user != null) {
-                              final newMessage = MessageModel(
-                                messageId: const Uuid().v4(),
-                                senderId: user.uid,
-                                message: _messageController.text,
-                                timestamp: Timestamp.now(),
-                              );
-                              await _databaseService.sendMessage(
-                                  widget.project.projectId, newMessage);
-                              _messageController.clear();
-                            }
-                          }
-                        },
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _messageController,
+                                decoration: const InputDecoration(hintText: 'Enter a message'),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.send),
+                              onPressed: () async {
+                                if (_messageController.text.isNotEmpty) {
+                                  final user = _authService.currentUser;
+                                  if (user != null) {
+                                    final newMessage = MessageModel(
+                                      messageId: const Uuid().v4(),
+                                      senderId: user.uid,
+                                      message: _messageController.text,
+                                      timestamp: Timestamp.now(),
+                                    );
+                                    await _databaseService.sendMessage(
+                                        widget.project.projectId, newMessage);
+                                    _messageController.clear();
+                                  }
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        bottomNavigationBar: const BannerAdWidget(),
                 ],
               ),
             ),
@@ -503,7 +488,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           onPressed: _showCreateTaskDialog,
           child: const Icon(Icons.add),
         ),
->>>>>>> fix-build-ui-steps-1-2-6895537269631612628
       ),
     );
   }

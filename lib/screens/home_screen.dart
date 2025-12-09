@@ -1,3 +1,8 @@
+import 'package:easy_task_flow/screens/messages_screen.dart';
+import 'package:easy_task_flow/screens/projects_screen.dart';
+import 'package:easy_task_flow/screens/settings_screen.dart';
+import 'package:flutter/material.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
