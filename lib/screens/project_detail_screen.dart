@@ -5,6 +5,7 @@ import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/screens/project_calendar_screen.dart';
 import 'package:easy_task_flow/screens/task_detail_screen.dart';
+import 'package:easy_task_flow/services/ai_service.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:easy_task_flow/services/dynamic_link_service.dart';
@@ -29,9 +30,72 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   final AuthService _authService = AuthService();
   final GoogleApiService _googleApiService = GoogleApiService();
   final DynamicLinkService _dynamicLinkService = DynamicLinkService();
+  final AiService _aiService = AiService();
   final TextEditingController _taskNameController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _quickAddController = TextEditingController();
   DateTime? _dueDate;
+  bool _isAiLoading = false;
+
+  Future<void> _handleQuickAdd() async {
+    final input = _quickAddController.text.trim();
+    if (input.isEmpty) return;
+
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    setState(() => _isAiLoading = true);
+
+    final canUseAi = await _databaseService.checkAndIncrementAiUsage(user.uid);
+    if (!canUseAi) {
+      if (mounted) {
+        setState(() => _isAiLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Daily AI limit reached! Upgrade to Pro.')),
+        );
+      }
+      return;
+    }
+
+    final result = await _aiService.parseTaskFromNaturalLanguage(input);
+    if (result.isEmpty || !result.containsKey('taskName')) {
+      if (mounted) {
+        setState(() => _isAiLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not understand task.')),
+        );
+      }
+      return;
+    }
+
+    final taskName = result['taskName'];
+    final subtasks = List<String>.from(result['subtasks'] ?? []);
+    DateTime dueDate = DateTime.now().add(const Duration(days: 1)); // Default
+    if (result['dueDate'] != null) {
+      try {
+        dueDate = DateTime.parse(result['dueDate']);
+      } catch (_) {}
+    }
+
+    final newTask = TaskModel(
+      taskId: const Uuid().v4(),
+      taskName: taskName,
+      dueDate: Timestamp.fromDate(dueDate),
+      assignees: [user.uid],
+      taskDetails: 'Created via AI',
+      subtasks: subtasks.map((s) => SubtaskModel(subtaskName: s, subtaskDetails: '')).toList(),
+    );
+
+    await _databaseService.createTask(widget.project.projectId, newTask);
+
+    if (mounted) {
+      setState(() => _isAiLoading = false);
+      _quickAddController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task created with AI!')),
+      );
+    }
+  }
 
   void _deleteProject() async {
     final confirmed = await showDialog<bool>(
@@ -257,9 +321,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             ],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            // Tasks View
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // Tasks View
             StreamBuilder<List<TaskModel>>(
               stream: _databaseService.getTasks(widget.project.projectId),
               builder: (context, snapshot) {
@@ -388,6 +455,31 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                 ),
               ],
+            ),
+                ],
+              ),
+            ),
+            if (_isAiLoading) const LinearProgressIndicator(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _quickAddController,
+                      decoration: const InputDecoration(
+                        hintText: 'Quick Add Task (AI)',
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome),
+                    onPressed: _handleQuickAdd,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

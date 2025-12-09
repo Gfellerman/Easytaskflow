@@ -1,9 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String userId;
   final String name;
   final String email;
   final String phoneNumber;
   final String? profilePictureUrl;
+  final String subscriptionTier;
+  final int dailyAiUsageCount;
+  final Timestamp? lastAiUsageDate;
 
   UserModel({
     required this.userId,
@@ -11,6 +16,9 @@ class UserModel {
     required this.email,
     required this.phoneNumber,
     this.profilePictureUrl,
+    this.subscriptionTier = 'Free',
+    this.dailyAiUsageCount = 0,
+    this.lastAiUsageDate,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +28,9 @@ class UserModel {
       'email': email,
       'phoneNumber': phoneNumber,
       'profilePictureUrl': profilePictureUrl,
+      'subscriptionTier': subscriptionTier,
+      'dailyAiUsageCount': dailyAiUsageCount,
+      'lastAiUsageDate': lastAiUsageDate,
     };
   }
 
@@ -32,6 +43,9 @@ class UserModel {
       email: json['email'] ?? '',
       phoneNumber: json['phoneNumber'] ?? '',
       profilePictureUrl: json['profilePictureUrl'],
+      subscriptionTier: json['subscriptionTier'] ?? 'Free',
+      dailyAiUsageCount: json['dailyAiUsageCount'] ?? 0,
+      lastAiUsageDate: json['lastAiUsageDate'],
     );
   }
 }
