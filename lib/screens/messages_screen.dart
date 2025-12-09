@@ -48,7 +48,9 @@ class MessagesScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ProjectDetailScreen(project: project),
+                                builder: (context) => ProjectDetailScreen(
+                                  project: project,
+                                ),
                               ),
                             );
                           },
