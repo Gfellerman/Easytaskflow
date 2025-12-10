@@ -178,8 +178,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                   widget.task.taskId,
                                   newFile,
                                 );
-                                Navigator.pop(context);
-                                if (context.mounted) Navigator.pop(context);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  if (context.mounted) Navigator.pop(context);
+                                }
                               },
                             );
                           },
@@ -242,7 +244,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         return Text(user.name);
                       },
                     );
-                  }).toList(),
+                  }),
                   const SizedBox(height: 10),
                   const Text('Details:'),
                   Text(widget.task.taskDetails),

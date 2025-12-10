@@ -193,7 +193,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                           );
                         },
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               );
@@ -234,8 +234,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
 
                   _taskNameController.clear();
                   _dueDate = null;
-                  Navigator.pop(context);
-                  if (context.mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    if (context.mounted) Navigator.pop(context);
+                  }
                 }
               },
               child: const Text('Create'),
@@ -267,24 +269,31 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 if (email.isNotEmpty) {
                   final user = await _databaseService.getUserByEmail(email);
                   if (user != null) {
-                    if (widget.project.memberIds.contains(user.userId)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User is already in this project')),
-                      );
-                    } else {
-                      await _databaseService.addMemberToProject(widget.project.projectId, user.userId);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User invited successfully')),
-                      );
+                    if (context.mounted) {
+                      if (widget.project.memberIds.contains(user.userId)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User is already in this project')),
+                        );
+                      } else {
+                        await _databaseService.addMemberToProject(
+                            widget.project.projectId, user.userId);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('User invited successfully')),
+                          );
+                        }
+                      }
                     }
                   } else {
-                    final dynamicLink =
-                        await _dynamicLinkService.createDynamicLink(widget.project.projectId);
+                    final dynamicLink = await _dynamicLinkService
+                        .createDynamicLink(widget.project.projectId);
                     Share.share('Join my project on EasyTaskFlow! $dynamicLink');
                   }
                   _emailController.clear();
-                  Navigator.pop(context);
-                  if (context.mounted) Navigator.pop(context);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    if (context.mounted) Navigator.pop(context);
+                  }
                 }
               },
               child: const Text('Invite'),

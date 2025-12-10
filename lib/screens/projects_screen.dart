@@ -63,7 +63,6 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     );
                     await _databaseService.createProject(newProject);
                     _projectNameController.clear();
-                    Navigator.pop(context);
                     if (context.mounted) Navigator.pop(context);
                   }
                 }

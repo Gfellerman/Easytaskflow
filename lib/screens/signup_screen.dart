@@ -1,6 +1,4 @@
-import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
-import 'package:easy_task_flow/services/database_service.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -18,7 +16,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _phoneNumberController = TextEditingController();
 
   final _authService = AuthService();
-  final _databaseService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {
