@@ -3,6 +3,7 @@ import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:easy_task_flow/services/google_api_service.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +17,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final DatabaseService _databaseService = DatabaseService();
   final GoogleApiService _googleApiService = GoogleApiService();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _apiKeyController = TextEditingController();
+
+  void _showApiKeyDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    _apiKeyController.text = prefs.getString('gemini_api_key') ?? '';
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('AI Configuration'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Enter your Google Gemini API Key to enable AI features.'),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _apiKeyController,
+                decoration: const InputDecoration(labelText: 'Gemini API Key'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await prefs.setString('gemini_api_key', _apiKeyController.text.trim());
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _showProfileDialog() async {
     final user = _authService.currentUser;
@@ -51,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   profilePictureUrl: userData.profilePictureUrl,
                 );
                 await _databaseService.updateUser(updatedUser);
-                if (mounted) Navigator.pop(context);
+                if (context.mounted) Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
@@ -74,6 +115,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Update your name'),
             leading: const Icon(Icons.person),
             onTap: _showProfileDialog,
+          ),
+          ListTile(
+            title: const Text('AI Settings'),
+            subtitle: const Text('Configure Gemini API Key'),
+            leading: const Icon(Icons.psychology),
+            onTap: _showApiKeyDialog,
           ),
           ListTile(
             title: const Text('Notification Preferences'),
