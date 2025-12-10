@@ -19,10 +19,9 @@ class AuthService {
         password: password,
       );
       return result.user;
-    } catch (e) {
-      print(e.toString());
-      // // print(e.toString());
-      return null;
+    } on FirebaseAuthException catch (e) {
+      // Re-throw the exception to be caught by the UI
+      throw e;
     }
   }
 
@@ -49,10 +48,9 @@ class AuthService {
         await _databaseService.createUser(newUser);
       }
       return user;
-    } catch (e) {
-      print(e.toString());
-      // print(e.toString());
-      return null;
+    } on FirebaseAuthException catch (e) {
+      // Re-throw the exception to be caught by the UI
+      throw e;
     }
   }
 
@@ -60,6 +58,7 @@ class AuthService {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        // User cancelled the sign-in
         return null;
       }
       final GoogleSignInAuthentication googleAuth =
@@ -84,11 +83,20 @@ class AuthService {
         }
       }
       return user;
-    } catch (e) {
-      print(e.toString());
-      // print(e.toString());
-      return null;
+    } on FirebaseAuthException catch (e) {
+      // Re-throw the exception to be caught by the UI
+      throw e;
     }
+  }
+
+  Future<User?> signInWithApple() async {
+    // TODO: Implement Sign in with Apple
+    throw UnimplementedError('Sign in with Apple is not yet implemented.');
+  }
+
+  Future<User?> signInWithX() async {
+    // TODO: Implement Sign in with X (Twitter)
+    throw UnimplementedError('Sign in with X is not yet implemented.');
   }
 
   Future<void> signOut() async {
