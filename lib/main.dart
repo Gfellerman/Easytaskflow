@@ -1,8 +1,10 @@
 import 'package:easy_task_flow/firebase_options.dart';
 import 'package:easy_task_flow/screens/auth_wrapper.dart';
-import 'package:easy_task_flow/screens/home_screen.dart';
 import 'package:easy_task_flow/screens/login_screen.dart';
+import 'package:easy_task_flow/screens/main_layout.dart';
 import 'package:easy_task_flow/screens/signup_screen.dart';
+import 'package:easy_task_flow/screens/welcome_screen.dart';
+import 'package:easy_task_flow/utils/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
@@ -32,14 +34,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EasyTaskFlow',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const AuthWrapper(),
       routes: {
+        '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainLayout(),
       },
     );
   }

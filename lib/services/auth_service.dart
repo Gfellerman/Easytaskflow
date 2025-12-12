@@ -44,6 +44,7 @@ class AuthService {
       );
       final user = result.user;
       if (user != null) {
+        await user.updateDisplayName(name);
         final newUser = UserModel(
           userId: user.uid,
           name: name,

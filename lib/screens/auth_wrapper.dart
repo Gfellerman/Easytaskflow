@@ -1,5 +1,5 @@
-import 'package:easy_task_flow/screens/home_screen.dart';
-import 'package:easy_task_flow/screens/login_screen.dart';
+import 'package:easy_task_flow/screens/main_layout.dart';
+import 'package:easy_task_flow/screens/welcome_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,9 +16,10 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
           if (user == null) {
-            return const LoginScreen();
+            return const WelcomeScreen();
+          } else {
+            return const MainLayout();
           }
-          return const HomeScreen();
         }
         return const Scaffold(
           body: Center(
