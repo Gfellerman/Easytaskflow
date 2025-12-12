@@ -32,10 +32,8 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        // Use Web options for Linux to support hybrid/dev environment
+        return web;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -44,29 +42,30 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBDgDZJwGa8GDml6WLLnkVqU-8mJ0UcWqY',
+    apiKey: 'AIzaSyBDgDZJwGa8GDmI6WLLnkVqU-8mJ0UcWqY',
     appId: '1:903290695559:web:65a45603e32ca12fd36d22',
     messagingSenderId: '903290695559',
     projectId: 'easytaskflow',
     authDomain: 'easytaskflow.firebaseapp.com',
     storageBucket: 'easytaskflow.firebasestorage.app',
+    measurementId: 'G-GWLK7V7H7Y',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDyX3h266JnSduNziwp_-wNtFmKSf7lK4s',
+    appId: '1:903290695559:android:1be15ec288c3b5e7d36d22',
+    messagingSenderId: '903290695559',
+    projectId: 'easytaskflow',
+    storageBucket: 'easytaskflow.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    iosBundleId: 'YOUR_IOS_BUNDLE_ID',
+    apiKey: 'AIzaSyCdWzBB-OfubSTqUf-mWx0vpw0zx9jB744',
+    appId: '1:903290695559:ios:18c1fb3cbf2cc8b0d36d22',
+    messagingSenderId: '903290695559',
+    projectId: 'easytaskflow',
+    storageBucket: 'easytaskflow.firebasestorage.app',
+    iosBundleId: 'com.example.easyTaskFlow',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

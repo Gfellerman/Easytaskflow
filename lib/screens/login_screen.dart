@@ -85,10 +85,32 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signInWithApple() async {
-    // TODO: Call the real implementation once available
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sign in with Apple is not yet implemented.')),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _authService.signInWithApple();
+      // AuthWrapper will handle navigation
+    } on FirebaseAuthException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to sign in with Apple: ${e.message}')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _signInWithX() async {
