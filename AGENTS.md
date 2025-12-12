@@ -45,7 +45,7 @@
 - **Primary goal:** Make `flutter build apk` succeed without errors or analyzer warnings.
 - **Known issues to address first:**
   1. **Naming mismatch:** Some code calls `addUserToProject` but `database_service.dart` defines `addMemberToProject` (or similar). Align the call and definition so they use a single, consistent name.
-  2. **Android config:** `android/app/build.gradle.kts` is missing the `applicationId`. Set it to `com.easytaskflow.app` (or the correct ID if specified elsewhere).
+  2. **Android config:** `android/app/build.gradle.kts` uses the `applicationId` `com.example.easy_task_flow` (matching `google-services.json`).
   3. **Pubspec:** Ensure `pubspec.yaml`:
      - Uses `sdk: ">=3.0.0 <4.0.0"` (or another stable range).
      - Uses up‑to‑date, non‑deprecated Firebase and Google packages when possible.

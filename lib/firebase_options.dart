@@ -53,11 +53,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyDyX3h266JnSduNziwp_-wNtFmKSf7lK4s',
+    appId: '1:903290695559:android:1be15ec288c3b5e7d36d22',
+    messagingSenderId: '903290695559',
+    projectId: 'easytaskflow',
+    storageBucket: 'easytaskflow.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
