@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -95,8 +96,35 @@ class AuthService {
   }
 
   Future<User?> signInWithX() async {
-    // TODO: Implement Sign in with X (Twitter)
-    throw UnimplementedError('Sign in with X is not yet implemented.');
+    try {
+      final TwitterAuthProvider twitterProvider = TwitterAuthProvider();
+      UserCredential result;
+
+      if (kIsWeb) {
+        result = await _auth.signInWithPopup(twitterProvider);
+      } else {
+        result = await _auth.signInWithProvider(twitterProvider);
+      }
+
+      final user = result.user;
+      if (user != null) {
+        final userExists = await _databaseService.doesUserExist(user.uid);
+        if (!userExists) {
+          final newUser = UserModel(
+            userId: user.uid,
+            name: user.displayName ?? '',
+            email: user.email ?? '',
+            phoneNumber: user.phoneNumber ?? '',
+            profilePictureUrl: user.photoURL ?? '',
+          );
+          await _databaseService.createUser(newUser);
+        }
+      }
+      return user;
+    } on FirebaseAuthException catch (e) {
+      // Re-throw the exception to be caught by the UI
+      throw e;
+    }
   }
 
   Future<void> signOut() async {
