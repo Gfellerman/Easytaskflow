@@ -32,10 +32,8 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        // Use Web options for Linux to support hybrid/dev environment
+        return web;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -44,12 +42,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBDgDZJwGa8GDml6WLLnkVqU-8mJ0UcWqY',
+    apiKey: 'AIzaSyBDgDZJwGa8GDmI6WLLnkVqU-8mJ0UcWqY',
     appId: '1:903290695559:web:65a45603e32ca12fd36d22',
     messagingSenderId: '903290695559',
     projectId: 'easytaskflow',
     authDomain: 'easytaskflow.firebaseapp.com',
     storageBucket: 'easytaskflow.firebasestorage.app',
+    measurementId: 'G-GWLK7V7H7Y',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
