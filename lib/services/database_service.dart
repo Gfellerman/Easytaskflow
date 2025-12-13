@@ -7,6 +7,7 @@ import 'package:easy_task_flow/models/project_model.dart';
 import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -147,7 +148,11 @@ class DatabaseService {
   // File methods
   Future<String> uploadFile(String filePath, String fileName) async {
     final file = File(filePath);
-    final ref = _storage.ref().child('task_documents/$fileName');
+    // Sanitize filename and add UUID to prevent overwrites and traversal
+    final sanitizedFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final uniqueName = '${const Uuid().v4()}_$sanitizedFileName';
+
+    final ref = _storage.ref().child('task_documents/$uniqueName');
     final uploadTask = await ref.putFile(file);
     return await uploadTask.ref.getDownloadURL();
   }
