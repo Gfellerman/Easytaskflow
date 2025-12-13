@@ -29,8 +29,8 @@ class _ProjectCalendarScreenState extends State<ProjectCalendarScreen> {
     _selectedEvents = [];
   }
 
-  List<TaskModel> _getEventsForDay(DateTime day, List<TaskModel> tasks) {
-    return tasks.where((task) => isSameDay(task.dueDate.toDate(), day)).toList();
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
   }
 
   @override
@@ -49,7 +49,24 @@ class _ProjectCalendarScreenState extends State<ProjectCalendarScreen> {
             return const Center(child: Text('No tasks yet.'));
           }
           final tasks = snapshot.data!;
-          _selectedEvents = _getEventsForDay(_selectedDay!, tasks);
+
+          // Optimization: Group tasks by date for O(1) lookup
+          // This prevents O(N*M) complexity in TableCalendar's eventLoader
+          final eventsMap = <DateTime, List<TaskModel>>{};
+          for (var task in tasks) {
+            final date = task.dueDate.toDate();
+            final key = _normalizeDate(date);
+            if (eventsMap[key] == null) {
+              eventsMap[key] = [];
+            }
+            eventsMap[key]!.add(task);
+          }
+
+          List<TaskModel> getEventsForDay(DateTime day) {
+            return eventsMap[_normalizeDate(day)] ?? [];
+          }
+
+          _selectedEvents = getEventsForDay(_selectedDay!);
 
           return Column(
             children: [
@@ -58,7 +75,7 @@ class _ProjectCalendarScreenState extends State<ProjectCalendarScreen> {
                 lastDay: DateTime.utc(2030, 3, 14),
                 focusedDay: _focusedDay,
                 calendarFormat: _calendarFormat,
-                eventLoader: (day) => _getEventsForDay(day, tasks),
+                eventLoader: (day) => getEventsForDay(day),
                 selectedDayPredicate: (day) {
                   return isSameDay(_selectedDay, day);
                 },
@@ -67,7 +84,7 @@ class _ProjectCalendarScreenState extends State<ProjectCalendarScreen> {
                     setState(() {
                       _selectedDay = selectedDay;
                       _focusedDay = focusedDay;
-                      _selectedEvents = _getEventsForDay(selectedDay, tasks);
+                      // _selectedEvents will be updated in the next build cycle via StreamBuilder
                     });
                   }
                 },
