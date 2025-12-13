@@ -1,7 +1,5 @@
-services:
-  - type: static
-    name: easytaskflow-web
-    env: static
+staticSites:
+  - name: easytaskflow-web
     buildCommand: bash render_build.sh
-    staticPublishPath: ./build/web
+    publishPath: ./build/web
     branch: main
