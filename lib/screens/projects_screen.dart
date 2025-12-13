@@ -131,6 +131,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
           stream: _databaseService.getProjects(user!.uid),
           builder: (context, snapshot) {
             return FloatingActionButton(
+              tooltip: 'Create Project',
               onPressed: () {
                 final projectCount = snapshot.data?.length ?? 0;
                 _showCreateProjectDialog(projectCount);
