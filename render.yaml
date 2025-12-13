@@ -1,5 +1,7 @@
-staticSites:
-  - name: easytaskflow-web
+services:
+  - type: web
+    name: easytaskflow-web
+    runtime: static
     buildCommand: bash render_build.sh
-    publishPath: ./build/web
+    staticPublishPath: ./build/web
     branch: main
