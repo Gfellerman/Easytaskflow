@@ -205,6 +205,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           title: Text(widget.task.taskName),
           actions: [
             IconButton(
+              tooltip: 'Delete Task',
               icon: const Icon(Icons.delete),
               onPressed: _deleteTask,
             ),
@@ -274,6 +275,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     },
                   ),
                   floatingActionButton: FloatingActionButton(
+                    tooltip: 'Add Subtask',
                     onPressed: () => _showAddSubtaskDialog(task),
                     child: const Icon(Icons.add),
                   ),
