@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import 'package:easy_task_flow/models/file_model.dart';
 import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
@@ -147,7 +148,17 @@ class DatabaseService {
   // File methods
   Future<String> uploadFile(String filePath, String fileName) async {
     final file = File(filePath);
-    final ref = _storage.ref().child('task_documents/$fileName');
+
+    // Generate a unique ID to prevent file overwrites
+    final uuid = const Uuid().v4();
+
+    // Sanitize filename to prevent path traversal and keep it clean
+    // Replace any character that is not alphanumeric, dot, underscore, or dash with an underscore
+    final sanitizedFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+    final storagePath = 'task_documents/${uuid}_$sanitizedFileName';
+    final ref = _storage.ref().child(storagePath);
+
     final uploadTask = await ref.putFile(file);
     return await uploadTask.ref.getDownloadURL();
   }
