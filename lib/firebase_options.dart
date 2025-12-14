@@ -32,7 +32,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
-        // Use Web options for Linux to support hybrid/dev environment
+         // Use Web options for Linux to support hybrid/dev environment
         return web;
       default:
         throw UnsupportedError(
@@ -69,11 +69,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_MACOS_API_KEY',
-    appId: 'YOUR_MACOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    iosBundleId: 'YOUR_MACOS_BUNDLE_ID',
+    apiKey: 'AIzaSyCdWzBB-OfubSTqUf-mWx0vpw0zx9jB744',
+    appId: '1:903290695559:ios:18c1fb3cbf2cc8b0d36d22',
+    messagingSenderId: '903290695559',
+    projectId: 'easytaskflow',
+    storageBucket: 'easytaskflow.firebasestorage.app',
+    iosBundleId: 'com.example.easyTaskFlow',
   );
 }

@@ -14,6 +14,7 @@ import 'package:easy_task_flow/widgets/banner_ad_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final ProjectModel project;
@@ -60,6 +61,17 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     }
 
     final result = await _aiService.parseTaskFromNaturalLanguage(input);
+
+    if (result.containsKey('error') && result['error'] == 'AI_NOT_CONFIGURED') {
+      if (mounted) {
+        setState(() => _isAiLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI is not configured. Upgrade to Pro or Add Key.')),
+        );
+      }
+      return;
+    }
+
     if (result.isEmpty || !result.containsKey('taskName')) {
       if (mounted) {
         setState(() => _isAiLoading = false);
@@ -266,25 +278,101 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 final email = _emailController.text;
                 if (email.isNotEmpty) {
                   final user = await _databaseService.getUserByEmail(email);
+                  Uri? link;
+
+                  // Create dynamic link first (needed for both cases if we want to include it)
+                  try {
+                    link = await _dynamicLinkService.createDynamicLink(widget.project.projectId);
+                  } catch (e) {
+                    // Fallback if dynamic links fail (e.g. on web/linux)
+                    link = Uri.parse('https://easytaskflow.com/project?id=${widget.project.projectId}');
+                  }
+
+                  // Close the input dialog first to avoid stack issues
+                  if (context.mounted) Navigator.pop(context);
+
                   if (user != null) {
+                    // User exists
                     if (widget.project.memberIds.contains(user.userId)) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User is already in this project')),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User is already in this project')),
+                        );
+                      }
                     } else {
                       await _databaseService.addMemberToProject(widget.project.projectId, user.userId);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('User invited successfully')),
-                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('User invited successfully')),
+                        );
+
+                        // Ask to send notification email
+                         showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Notify User?'),
+                            content: Text('Send an email to $email to let them know they were added?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final uri = Uri(
+                                    scheme: 'mailto',
+                                    path: email,
+                                    query: 'subject=You have been added to ${widget.project.projectName}&body=You have been added to the project "${widget.project.projectName}" on EasyTaskFlow. Check it out here: $link',
+                                  );
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri);
+                                  }
+                                },
+                                child: const Text('Send Email'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                     }
                   } else {
-                    final dynamicLink =
-                        await _dynamicLinkService.createDynamicLink(widget.project.projectId);
-                    Share.share('Join my project on EasyTaskFlow! $dynamicLink');
+                    // User does not exist
+                    // Prompt to send invitation email
+                    if (context.mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('User Not Found'),
+                            content: Text('User with email $email was not found. Send an invitation email?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  Navigator.pop(context);
+                                  final uri = Uri(
+                                    scheme: 'mailto',
+                                    path: email,
+                                    query: 'subject=Invitation to EasyTaskFlow&body=I invite you to join my project "${widget.project.projectName}" on EasyTaskFlow. Join here: $link',
+                                  );
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri);
+                                  } else {
+                                     // Fallback: Copy link
+                                     await Share.share('Join my project on EasyTaskFlow! $link');
+                                  }
+                                },
+                                child: const Text('Send Invite'),
+                              ),
+                            ],
+                          ),
+                        );
+                    }
                   }
                   _emailController.clear();
-                  Navigator.pop(context);
-                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: const Text('Invite'),
