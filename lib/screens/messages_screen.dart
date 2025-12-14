@@ -1,8 +1,7 @@
-import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
-import 'package:easy_task_flow/screens/project_detail_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
+import 'package:easy_task_flow/widgets/project_message_tile.dart';
 import 'package:flutter/material.dart';
 
 class MessagesScreen extends StatelessWidget {
@@ -37,25 +36,9 @@ class MessagesScreen extends StatelessWidget {
                   itemCount: projects.length,
                   itemBuilder: (context, index) {
                     final project = projects[index];
-                    return StreamBuilder<MessageModel?>(
-                      stream: databaseService.getMostRecentMessage(project.projectId),
-                      builder: (context, snapshot) {
-                        final message = snapshot.data;
-                        return ListTile(
-                          title: Text(project.projectName),
-                          subtitle: Text(message?.message ?? 'No messages yet'),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProjectDetailScreen(
-                                  project: project,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                    return ProjectMessageTile(
+                      project: project,
+                      databaseService: databaseService,
                     );
                   },
                 );
