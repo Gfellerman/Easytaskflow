@@ -305,10 +305,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.person_add),
+              tooltip: 'Invite User',
               onPressed: _showInviteDialog,
             ),
             IconButton(
               icon: const Icon(Icons.delete),
+              tooltip: 'Delete Project',
               onPressed: _deleteProject,
             ),
           ],
@@ -434,6 +436,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.send),
+                              tooltip: 'Send Message',
                               onPressed: () async {
                                 if (_messageController.text.isNotEmpty) {
                                   final user = _authService.currentUser;
@@ -476,6 +479,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.auto_awesome),
+                    tooltip: 'Quick Add with AI',
                     onPressed: _handleQuickAdd,
                   ),
                 ],
@@ -486,6 +490,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         bottomNavigationBar: const BannerAdWidget(),
         floatingActionButton: FloatingActionButton(
           onPressed: _showCreateTaskDialog,
+          tooltip: 'Create Task',
           child: const Icon(Icons.add),
         ),
       ),

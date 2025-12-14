@@ -135,6 +135,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                 final projectCount = snapshot.data?.length ?? 0;
                 _showCreateProjectDialog(projectCount);
               },
+              tooltip: 'Create New Project',
               child: const Icon(Icons.add),
             );
           }),
