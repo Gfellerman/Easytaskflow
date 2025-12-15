@@ -1,4 +1,3 @@
-import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
 import 'package:easy_task_flow/screens/project_detail_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
@@ -37,23 +36,20 @@ class MessagesScreen extends StatelessWidget {
                   itemCount: projects.length,
                   itemBuilder: (context, index) {
                     final project = projects[index];
-                    return StreamBuilder<MessageModel?>(
-                      stream: databaseService.getMostRecentMessage(project.projectId),
-                      builder: (context, snapshot) {
-                        final message = snapshot.data;
-                        return ListTile(
-                          title: Text(project.projectName),
-                          subtitle: Text(message?.message ?? 'No messages yet'),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProjectDetailScreen(
-                                  project: project,
-                                ),
-                              ),
-                            );
-                          },
+                    // Optimized: Access last message directly from ProjectModel
+                    // This eliminates the N+1 StreamBuilder pattern, reducing Firestore reads
+                    // from (N_projects + 1) to just 1 stream.
+                    return ListTile(
+                      title: Text(project.projectName),
+                      subtitle: Text(project.lastMessage ?? 'No messages yet'),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProjectDetailScreen(
+                              project: project,
+                            ),
+                          ),
                         );
                       },
                     );

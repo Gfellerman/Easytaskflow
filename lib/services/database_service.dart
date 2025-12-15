@@ -109,11 +109,18 @@ class DatabaseService {
 
   // Message methods
   Future<void> sendMessage(String projectId, MessageModel message) async {
+    // Add message to subcollection
     await _db
         .collection('projects')
         .doc(projectId)
         .collection('messages')
         .add(message.toJson());
+
+    // Optimization: Update project with last message info to avoid N+1 queries
+    await _db.collection('projects').doc(projectId).update({
+      'lastMessage': message.message,
+      'lastMessageTimestamp': message.timestamp,
+    });
   }
 
   Stream<List<MessageModel>> getMessages(String projectId) {
