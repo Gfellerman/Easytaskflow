@@ -16,7 +16,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) {
+    if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
       _loadAd();
     }
   }
@@ -47,7 +47,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
+    if (kIsWeb || (defaultTargetPlatform != TargetPlatform.android && defaultTargetPlatform != TargetPlatform.iOS)) {
       return const SizedBox();
     }
 
