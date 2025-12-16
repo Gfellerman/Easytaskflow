@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:easy_task_flow/firebase_options.dart';
 import 'package:easy_task_flow/screens/auth_wrapper.dart';
 import 'package:easy_task_flow/screens/login_screen.dart';
@@ -11,26 +12,48 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.appAttest,
-      webProvider: ReCaptchaV3Provider('6LfaESksAAAAANFC2czdzWOXkPMeMaYnXe59xGOa'),
-    );
-    if (!kIsWeb) {
-      MobileAds.instance.initialize();
+    // Set up global error handling
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      runApp(ErrorApp(message: details.exception.toString(), stackTrace: details.stack));
+    };
+
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.playIntegrity,
+        appleProvider: AppleProvider.appAttest,
+        webProvider: ReCaptchaV3Provider('6LfaESksAAAAANFC2czdzWOXkPMeMaYnXe59xGOa'),
+      );
+      if (!kIsWeb) {
+        MobileAds.instance.initialize();
+      }
+      runApp(const MyApp());
+    } catch (e, stack) {
+      debugPrint('Initialization Error: $e');
+      runApp(ErrorApp(message: e.toString(), stackTrace: stack));
     }
-    runApp(const MyApp());
-  } catch (e, stack) {
-    debugPrint('Initialization Error: $e');
-    debugPrintStack(stackTrace: stack);
-    runApp(MaterialApp(
+  }, (error, stack) {
+    debugPrint('Zone Error: $error');
+    runApp(ErrorApp(message: error.toString(), stackTrace: stack));
+  });
+}
+
+class ErrorApp extends StatelessWidget {
+  final String message;
+  final StackTrace? stackTrace;
+
+  const ErrorApp({super.key, required this.message, this.stackTrace});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
       home: Scaffold(
         backgroundColor: const Color(0xFF101922),
         body: Center(
@@ -39,26 +62,38 @@ void main() async {
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 48),
                   const SizedBox(height: 16),
                   const Text(
-                    'Application Failed to Start',
+                    'Application Error',
                     style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    '$e',
+                  SelectableText(
+                    message,
                     style: const TextStyle(color: Colors.redAccent, fontSize: 14, fontFamily: 'monospace'),
                     textAlign: TextAlign.center,
                   ),
+                  if (stackTrace != null) ...[
+                     const SizedBox(height: 16),
+                     Container(
+                       padding: const EdgeInsets.all(8),
+                       color: Colors.black26,
+                       child: SelectableText(
+                         stackTrace.toString(),
+                         style: const TextStyle(color: Colors.white70, fontSize: 10, fontFamily: 'monospace'),
+                       ),
+                     ),
+                  ]
                 ],
               ),
             ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
