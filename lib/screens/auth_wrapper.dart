@@ -9,10 +9,31 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = AuthService();
+    // Wrap AuthService instantiation in try-catch to be safe
+    AuthService? authService;
+    try {
+      authService = AuthService();
+    } catch (e) {
+      debugPrint('AuthWrapper: Error initializing AuthService: $e');
+      return Scaffold(
+        body: Center(
+          child: Text('Authentication Error: $e'),
+        ),
+      );
+    }
+
     return StreamBuilder<User?>(
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint('AuthWrapper: Stream Error: ${snapshot.error}');
+          return Scaffold(
+            body: Center(
+              child: Text('Connection Error: ${snapshot.error}'),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.active) {
           final user = snapshot.data;
           if (user == null) {
@@ -21,7 +42,10 @@ class AuthWrapper extends StatelessWidget {
             return const MainLayout();
           }
         }
+
+        // Loading state
         return const Scaffold(
+          backgroundColor: Color(0xFF101922),
           body: Center(
             child: CircularProgressIndicator(),
           ),

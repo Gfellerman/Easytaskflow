@@ -15,33 +15,58 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 void main() {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    debugPrint('EasyTaskFlow: WidgetsFlutterBinding initialized');
 
     // Set up global error handling
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
-      runApp(ErrorApp(message: details.exception.toString(), stackTrace: details.stack));
+      // Only show error app for fatal errors that crash the widget tree root
+      // runApp(ErrorApp(message: details.exception.toString(), stackTrace: details.stack));
     };
 
     try {
+      debugPrint('EasyTaskFlow: Initializing Firebase...');
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.playIntegrity,
-        appleProvider: AppleProvider.appAttest,
-        webProvider: ReCaptchaV3Provider('6LfaESksAAAAANFC2czdzWOXkPMeMaYnXe59xGOa'),
-      );
-      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
-        MobileAds.instance.initialize();
+      debugPrint('EasyTaskFlow: Firebase initialized');
+
+      try {
+        debugPrint('EasyTaskFlow: Activating Firebase App Check...');
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: AndroidProvider.playIntegrity,
+          appleProvider: AppleProvider.appAttest,
+          webProvider: ReCaptchaV3Provider('6LfaESksAAAAANFC2czdzWOXkPMeMaYnXe59xGOa'),
+        );
+        debugPrint('EasyTaskFlow: Firebase App Check activated');
+      } catch (e, stack) {
+        // App Check failure should not crash the app, but might affect requests
+        debugPrint('EasyTaskFlow: Warning - Firebase App Check failed: $e');
+        debugPrint(stack.toString());
       }
+
+      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
+        try {
+          debugPrint('EasyTaskFlow: Initializing Mobile Ads...');
+          MobileAds.instance.initialize();
+          debugPrint('EasyTaskFlow: Mobile Ads initialized');
+        } catch (e) {
+          debugPrint('EasyTaskFlow: Warning - Mobile Ads failed: $e');
+        }
+      }
+
+      debugPrint('EasyTaskFlow: Running App...');
       runApp(const MyApp());
     } catch (e, stack) {
-      debugPrint('Initialization Error: $e');
+      debugPrint('EasyTaskFlow: Fatal Initialization Error: $e');
       runApp(ErrorApp(message: e.toString(), stackTrace: stack));
     }
   }, (error, stack) {
-    debugPrint('Zone Error: $error');
-    runApp(ErrorApp(message: error.toString(), stackTrace: stack));
+    debugPrint('EasyTaskFlow: Zone Error: $error');
+    // If the app hasn't started yet, show the error screen
+    // But if it's a runtime error later, maybe just log it?
+    // For now, we want to see it.
+    // runApp(ErrorApp(message: error.toString(), stackTrace: stack));
   });
 }
 
