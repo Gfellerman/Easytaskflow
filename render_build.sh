@@ -10,5 +10,6 @@ flutter config --enable-web
 echo "Getting Dependencies..."
 flutter pub get
 echo "Building Web..."
-flutter build web --release --base-href /
+# Use HTML renderer for better compatibility on static hosts (avoids WASM MIME issues)
+flutter build web --release --base-href / --web-renderer html
 echo "Build Complete!"
