@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import 'package:easy_task_flow/models/file_model.dart';
 import 'package:easy_task_flow/models/message_model.dart';
 import 'package:easy_task_flow/models/project_model.dart';
@@ -147,7 +148,20 @@ class DatabaseService {
   // File methods
   Future<String> uploadFile(String filePath, String fileName) async {
     final file = File(filePath);
-    final ref = _storage.ref().child('task_documents/$fileName');
+
+    // Generate a unique ID to prevent overwrites and path traversal
+    final uniqueId = const Uuid().v4();
+
+    // Try to preserve extension if it exists
+    String extension = '';
+    final dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex < fileName.length - 1) {
+      extension = fileName.substring(dotIndex);
+    }
+
+    final uniqueFileName = '$uniqueId$extension';
+    final ref = _storage.ref().child('task_documents/$uniqueFileName');
+
     final uploadTask = await ref.putFile(file);
     return await uploadTask.ref.getDownloadURL();
   }
