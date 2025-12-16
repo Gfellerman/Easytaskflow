@@ -31,7 +31,7 @@ void main() {
         appleProvider: AppleProvider.appAttest,
         webProvider: ReCaptchaV3Provider('6LfaESksAAAAANFC2czdzWOXkPMeMaYnXe59xGOa'),
       );
-      if (!kIsWeb) {
+      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
         MobileAds.instance.initialize();
       }
       runApp(const MyApp());
