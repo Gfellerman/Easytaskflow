@@ -1,12 +1,16 @@
+import 'package:easy_task_flow/providers/dashboard_provider.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = AuthService().currentUser;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authServiceProvider).currentUser;
+    final stats = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,17 +24,20 @@ class DashboardScreen extends StatelessWidget {
             icon: const Icon(Icons.search),
             onPressed: () {},
             tooltip: 'Search',
-          ), // Global Search placeholder
+          ),
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {},
+            onPressed: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon!')),
+              );
+            },
             tooltip: 'Notifications',
-          ), // Notifications placeholder
+          ),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Padding and spacing
           final double padding = constraints.maxWidth > 600 ? 32.0 : 16.0;
 
           return SingleChildScrollView(
@@ -47,13 +54,13 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Simplified Responsive Row for the 2 metrics
+                // Metrics Row
                 Row(
                   children: [
                     Expanded(
                       child: _OverviewCard(
                         title: 'Tasks Due',
-                        value: '5',
+                        value: '${stats.tasksDueCount}',
                         icon: Icons.task_alt,
                         color: Colors.orange,
                       ),
@@ -62,12 +69,11 @@ class DashboardScreen extends StatelessWidget {
                     Expanded(
                       child: _OverviewCard(
                         title: 'Projects',
-                        value: '3',
+                        value: '${stats.projectCount}',
                         icon: Icons.folder_open,
                         color: Colors.blue,
                       ),
                     ),
-                    // On wider screens we add spacers to prevent infinite stretching
                     if (constraints.maxWidth > 800) ...[
                          const SizedBox(width: 16),
                          const Spacer(),
@@ -78,28 +84,41 @@ class DashboardScreen extends StatelessWidget {
 
                 const SizedBox(height: 32),
 
-                // Sections
+                // Upcoming Deadlines
                 _SectionHeader(title: 'Upcoming Deadlines'),
                 const SizedBox(height: 12),
-                const Card(
-                  child: ListTile(
-                    title: Text('Website Redesign'),
-                    subtitle: Text('Due Today'),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                if (stats.upcomingDeadlines.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No upcoming deadlines.'),
                   )
-                ),
+                else
+                  ...stats.upcomingDeadlines.map((task) => Card(
+                    child: ListTile(
+                      title: Text(task.taskName),
+                      subtitle: Text('Due ${DateFormat.yMMMd().format(task.dueDate.toDate())}'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    ),
+                  )),
 
                 const SizedBox(height: 24),
 
-                _SectionHeader(title: 'Recent Activity'),
+                // Recent Activity (Recently Created Tasks)
+                _SectionHeader(title: 'Recently Added'),
                 const SizedBox(height: 12),
-                const Card(
-                  child: ListTile(
-                    leading: Icon(Icons.check_circle_outline),
-                    title: Text('Task Completed'),
-                    subtitle: Text('Mobile App > Login Screen'),
+                if (stats.recentActivity.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No recent activity.'),
                   )
-                ),
+                else
+                  ...stats.recentActivity.map((task) => Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.add_circle_outline),
+                      title: Text('New Task: ${task.taskName}'),
+                      subtitle: Text('Added ${DateFormat.MMMd().add_jm().format(task.createdAt.toDate())}'),
+                    ),
+                  )),
               ],
             ),
           );
@@ -138,10 +157,10 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20), // Increased padding
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16), // Softer corners
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
