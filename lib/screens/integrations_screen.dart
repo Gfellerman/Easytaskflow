@@ -20,12 +20,22 @@ class _IntegrationsScreenState extends State<IntegrationsScreen> {
   }
 
   Future<void> _checkStatus() async {
-    final google = await _googleDrive.isConnected();
-    if (mounted) {
-      setState(() {
-        _isGoogleConnected = google;
-        _isLoading = false;
-      });
+    try {
+      final google = await _googleDrive.isConnected().timeout(const Duration(seconds: 5));
+      if (mounted) {
+        setState(() {
+          _isGoogleConnected = google;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking integration status: $e');
+      if (mounted) {
+        setState(() {
+          _isGoogleConnected = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 

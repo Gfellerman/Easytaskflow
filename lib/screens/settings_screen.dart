@@ -42,13 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             TextButton(
               onPressed: () async {
-                final updatedUser = UserModel(
-                  userId: userData.userId,
-                  name: _nameController.text,
-                  email: userData.email,
-                  phoneNumber: userData.phoneNumber,
-                  profilePictureUrl: userData.profilePictureUrl,
-                );
+                final updatedUser = userData.copyWith(name: _nameController.text);
                 await _databaseService.updateUser(updatedUser);
                 if (mounted) Navigator.pop(context);
               },
@@ -88,20 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: isEnabled,
                 onChanged: (val) async {
                   if (userModel != null) {
-                    // Manual copyWith since UserModel doesn't have it yet?
-                    // Actually UserModel doesn't have copyWith in the file I read.
-                    // I'll create a new instance manually.
-                    final updatedUser = UserModel(
-                      userId: userModel.userId,
-                      name: userModel.name,
-                      email: userModel.email,
-                      phoneNumber: userModel.phoneNumber,
-                      profilePictureUrl: userModel.profilePictureUrl,
-                      subscriptionTier: userModel.subscriptionTier,
-                      dailyAiUsageCount: userModel.dailyAiUsageCount,
-                      lastAiUsageDate: userModel.lastAiUsageDate,
-                      notificationsEnabled: val,
-                    );
+                    final updatedUser = userModel.copyWith(notificationsEnabled: val);
                     await _databaseService.updateUser(updatedUser);
                     setState(() {});
                   }

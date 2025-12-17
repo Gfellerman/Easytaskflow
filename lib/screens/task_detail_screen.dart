@@ -4,6 +4,7 @@ import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/database_service.dart';
 import 'package:easy_task_flow/services/google_drive_service.dart';
 import 'package:easy_task_flow/services/cloud_storage_service.dart';
+import 'package:easy_task_flow/screens/integrations_screen.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,6 +30,20 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final TextEditingController _subtaskNameController = TextEditingController();
   final TextEditingController _subtaskDetailsController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
+  bool _isGoogleConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkCloudStatus();
+  }
+
+  Future<void> _checkCloudStatus() async {
+    try {
+      final connected = await _googleDriveService.isConnected().timeout(const Duration(seconds: 2));
+      if (mounted) setState(() => _isGoogleConnected = connected);
+    } catch (_) {}
+  }
 
   void _deleteTask() async {
     final confirmed = await showDialog<bool>(
@@ -130,35 +145,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
          }
       }
     }
-  }
-
-  void _showCloudPickerDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Provider'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.cloud_circle),
-                title: const Text('Google Drive'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showGoogleDrivePickerDialog();
-                },
-              ),
-              const ListTile(
-                leading: Icon(Icons.cloud_off),
-                title: Text('OneDrive (Coming Soon)'),
-                enabled: false,
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   void _showGoogleDrivePickerDialog() {
@@ -466,10 +452,42 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       );
                     },
                   ),
-                  floatingActionButton: FloatingActionButton.extended(
-                    onPressed: _showCloudPickerDialog, // Changed to show picker
-                    label: const Text('Attach File'),
-                    icon: const Icon(Icons.add),
+                  floatingActionButton: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      FloatingActionButton.extended(
+                        heroTag: 'local_upload',
+                        onPressed: _uploadFile,
+                        label: const Text('Upload Local File'),
+                        icon: const Icon(Icons.upload_file),
+                      ),
+                      const SizedBox(height: 10),
+                      if (_isGoogleConnected) ...[
+                        FloatingActionButton.extended(
+                          heroTag: 'drive_attach',
+                          onPressed: _showGoogleDrivePickerDialog,
+                          label: const Text('From Google Drive'),
+                          icon: const Icon(Icons.add_to_drive),
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      FloatingActionButton.extended(
+                        heroTag: 'add_cloud',
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const IntegrationsScreen()),
+                          );
+                          _checkCloudStatus();
+                        },
+                        label: const Text('Add Cloud Storage'),
+                        icon: const Icon(Icons.cloud_queue),
+                      ),
+                    ],
                   ),
                 ),
               ],

@@ -52,4 +52,28 @@ class UserModel {
       notificationsEnabled: json['notificationsEnabled'] ?? true,
     );
   }
+
+  UserModel copyWith({
+    String? userId,
+    String? name,
+    String? email,
+    String? phoneNumber,
+    String? profilePictureUrl,
+    String? subscriptionTier,
+    int? dailyAiUsageCount,
+    Timestamp? lastAiUsageDate,
+    bool? notificationsEnabled,
+  }) {
+    return UserModel(
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
+      subscriptionTier: subscriptionTier ?? this.subscriptionTier,
+      dailyAiUsageCount: dailyAiUsageCount ?? this.dailyAiUsageCount,
+      lastAiUsageDate: lastAiUsageDate ?? this.lastAiUsageDate,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+    );
+  }
 }
