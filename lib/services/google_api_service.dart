@@ -4,6 +4,10 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:http/http.dart' as http;
 
 class GoogleApiService {
+  static final GoogleApiService _instance = GoogleApiService._internal();
+  factory GoogleApiService() => _instance;
+  GoogleApiService._internal();
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
       calendar.CalendarApi.calendarScope,
