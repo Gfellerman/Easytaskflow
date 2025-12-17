@@ -12,11 +12,11 @@ class MyTasksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tasks = ref.watch(myTasksProvider);
 
-    // Sort: Not completed first, then by Due Date
+    // Sort: Done last, then by Due Date
     final sortedTasks = List<TaskModel>.from(tasks)
       ..sort((a, b) {
-        if (a.isCompleted != b.isCompleted) {
-          return a.isCompleted ? 1 : -1; // Completed last
+        if (a.isDone != b.isDone) {
+          return a.isDone ? 1 : -1;
         }
         return a.dueDate.compareTo(b.dueDate);
       });
@@ -32,23 +32,37 @@ class MyTasksScreen extends ConsumerWidget {
               itemCount: sortedTasks.length,
               itemBuilder: (context, index) {
                 final task = sortedTasks[index];
-                final isOverdue = task.dueDate.toDate().isBefore(DateTime.now()) && !task.isCompleted;
+                final isOverdue = task.dueDate.toDate().isBefore(DateTime.now()) && !task.isDone;
 
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: Checkbox(
-                      value: task.isCompleted,
-                      onChanged: (val) {
-                        if (val != null) {
-                          _toggleTaskCompletion(context, ref, task, val);
-                        }
-                      },
+                    leading: Tooltip(
+                      message: 'Status: ${task.status.replaceAll('_', ' ').toUpperCase()}',
+                      child: IconButton(
+                        icon: Icon(
+                          task.isDone
+                              ? Icons.check_circle
+                              : (task.isInProgress
+                                  ? Icons.timelapse
+                                  : Icons.radio_button_unchecked),
+                          color: task.isDone
+                              ? Colors.green
+                              : (task.isInProgress ? Colors.orange : Colors.grey),
+                        ),
+                        onPressed: () {
+                          String newStatus = 'todo';
+                          if (task.isTodo) newStatus = 'in_progress';
+                          else if (task.isInProgress) newStatus = 'done';
+                          else newStatus = 'todo';
+                          _updateTaskStatus(context, ref, task, newStatus);
+                        },
+                      ),
                     ),
                     title: Text(
                       task.taskName,
-                      style: task.isCompleted
+                      style: task.isDone
                           ? const TextStyle(
                               decoration: TextDecoration.lineThrough,
                               color: Colors.grey,
@@ -66,6 +80,11 @@ class MyTasksScreen extends ConsumerWidget {
                             fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
+                        if (task.isInProgress)
+                          const Text(
+                            'In Progress',
+                            style: TextStyle(color: Colors.orange, fontSize: 12),
+                          ),
                       ],
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -87,8 +106,8 @@ class MyTasksScreen extends ConsumerWidget {
     );
   }
 
-  void _toggleTaskCompletion(BuildContext context, WidgetRef ref, TaskModel task, bool isCompleted) {
-    final updatedTask = task.copyWith(isCompleted: isCompleted);
+  void _updateTaskStatus(BuildContext context, WidgetRef ref, TaskModel task, String status) {
+    final updatedTask = task.copyWith(status: status);
     final db = ref.read(databaseServiceProvider);
 
     db.updateTask(task.projectId, updatedTask).catchError((e) {

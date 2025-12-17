@@ -91,14 +91,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   );
                   final updatedSubtasks = List<SubtaskModel>.from(currentTask.subtasks)
                     ..add(newSubtask);
-                  final updatedTask = TaskModel(
-                    taskId: currentTask.taskId,
-                    taskName: currentTask.taskName,
-                    dueDate: currentTask.dueDate,
-                    assignees: currentTask.assignees,
-                    taskDetails: currentTask.taskDetails,
-                    subtasks: updatedSubtasks,
-                  );
+                  final updatedTask = currentTask.copyWith(subtasks: updatedSubtasks);
                   _databaseService.updateTask(widget.projectId, updatedTask);
                   _subtaskNameController.clear();
                   _subtaskDetailsController.clear();
@@ -198,71 +191,92 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.task.taskName),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteTask,
-            ),
-          ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Details'),
-              Tab(text: 'Subtasks'),
-              Tab(text: 'Documents'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            // Details View
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Due Date: ${widget.task.dueDate.toDate()}'),
-                  const SizedBox(height: 10),
-                  const Text('Assignees:'),
-                  ...widget.task.assignees.map((assigneeId) {
-                    return FutureBuilder<UserModel?>(
-                      future: _databaseService.getUserById(assigneeId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Text('Loading...');
-                        }
-                        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-                          return const Text('Error loading user');
-                        }
-                        final user = snapshot.data!;
-                        return Text(user.name);
-                      },
-                    );
-                  }).toList(),
-                  const SizedBox(height: 10),
-                  const Text('Details:'),
-                  Text(widget.task.taskDetails),
+    return StreamBuilder<TaskModel>(
+      // Use the injected projectId from task if available, or widget.projectId
+      // Actually widget.task.projectId might be set, but widget.projectId is passed explicitly.
+      stream: _databaseService
+          .getTasks(widget.projectId)
+          .map((tasks) => tasks.firstWhere((task) => task.taskId == widget.task.taskId)),
+      initialData: widget.task,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        final task = snapshot.data!;
+
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(task.taskName),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: _deleteTask,
+                ),
+              ],
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Details'),
+                  Tab(text: 'Subtasks'),
+                  Tab(text: 'Documents'),
                 ],
               ),
             ),
-            // Subtasks View
-            StreamBuilder<TaskModel>(
-              stream: _databaseService
-                  .getTasks(widget.projectId)
-                  .map((tasks) => tasks.firstWhere((task) => task.taskId == widget.task.taskId)),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError || !snapshot.hasData) {
-                  return const Center(child: Text('Error loading subtasks.'));
-                }
-                final task = snapshot.data!;
-                return Scaffold(
+            body: TabBarView(
+              children: [
+                // Details View
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status Dropdown
+                      Row(
+                        children: [
+                          const Text('Status: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 10),
+                          DropdownButton<String>(
+                            value: task.status,
+                            items: const [
+                              DropdownMenuItem(value: 'todo', child: Text('To Do')),
+                              DropdownMenuItem(value: 'in_progress', child: Text('In Progress')),
+                              DropdownMenuItem(value: 'done', child: Text('Done')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                final updatedTask = task.copyWith(status: val);
+                                _databaseService.updateTask(widget.projectId, updatedTask);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text('Due Date: ${task.dueDate.toDate()}'),
+                      const SizedBox(height: 10),
+                      const Text('Assignees:'),
+                      ...task.assignees.map((assigneeId) {
+                        return FutureBuilder<UserModel?>(
+                          future: _databaseService.getUserById(assigneeId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+                              return const Text('Error loading user');
+                            }
+                            final user = snapshot.data!;
+                            return Text(user.name);
+                          },
+                        );
+                      }).toList(),
+                      const SizedBox(height: 10),
+                      const Text('Details:'),
+                      Text(task.taskDetails),
+                    ],
+                  ),
+                ),
+                // Subtasks View
+                Scaffold(
                   body: ListView.builder(
                     itemCount: task.subtasks.length,
                     itemBuilder: (context, index) {
@@ -270,6 +284,23 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       return ListTile(
                         title: Text(subtask.subtaskName),
                         subtitle: Text(subtask.subtaskDetails),
+                        // Maybe add completion toggle for subtasks too?
+                        leading: Checkbox(
+                          value: subtask.isCompleted,
+                          onChanged: (val) {
+                             if (val != null) {
+                               final updatedSubtasks = List<SubtaskModel>.from(task.subtasks);
+                               final updatedSubtask = SubtaskModel(
+                                  subtaskName: subtask.subtaskName,
+                                  subtaskDetails: subtask.subtaskDetails,
+                                  isCompleted: val
+                               );
+                               updatedSubtasks[index] = updatedSubtask;
+                               final updatedTask = task.copyWith(subtasks: updatedSubtasks);
+                               _databaseService.updateTask(widget.projectId, updatedTask);
+                             }
+                          },
+                        ),
                       );
                     },
                   ),
@@ -277,64 +308,64 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     onPressed: () => _showAddSubtaskDialog(task),
                     child: const Icon(Icons.add),
                   ),
-                );
-              },
-            ),
-            // Documents View
-            Scaffold(
-              body: StreamBuilder<List<FileModel>>(
-                stream: _databaseService.getFilesForTask(widget.projectId, widget.task.taskId),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No documents yet.'));
-                  }
-                  final files = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: files.length,
-                    itemBuilder: (context, index) {
-                      final file = files[index];
-                      return ListTile(
-                        title: Text(file.fileName),
-                        leading: const Icon(Icons.insert_drive_file),
-                        onTap: () async {
-                          final uri = Uri.parse(file.fileUrl);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri);
-                          } else {
-                            throw 'Could not launch ${file.fileUrl}';
-                          }
+                ),
+                // Documents View
+                Scaffold(
+                  body: StreamBuilder<List<FileModel>>(
+                    stream: _databaseService.getFilesForTask(widget.projectId, task.taskId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No documents yet.'));
+                      }
+                      final files = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: files.length,
+                        itemBuilder: (context, index) {
+                          final file = files[index];
+                          return ListTile(
+                            title: Text(file.fileName),
+                            leading: const Icon(Icons.insert_drive_file),
+                            onTap: () async {
+                              final uri = Uri.parse(file.fileUrl);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri);
+                              } else {
+                                throw 'Could not launch ${file.fileUrl}';
+                              }
+                            },
+                          );
                         },
                       );
                     },
-                  );
-                },
-              ),
-              floatingActionButton: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FloatingActionButton.extended(
-                    onPressed: _uploadFile,
-                    label: const Text('Upload File'),
-                    icon: const Icon(Icons.attach_file),
                   ),
-                  const SizedBox(height: 10),
-                  FloatingActionButton.extended(
-                    onPressed: _showGoogleDrivePickerDialog,
-                    label: const Text('Attach from Google Drive'),
-                    icon: const Icon(Icons.add_to_drive),
+                  floatingActionButton: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FloatingActionButton.extended(
+                        onPressed: _uploadFile,
+                        label: const Text('Upload File'),
+                        icon: const Icon(Icons.attach_file),
+                      ),
+                      const SizedBox(height: 10),
+                      FloatingActionButton.extended(
+                        onPressed: _showGoogleDrivePickerDialog,
+                        label: const Text('Attach from Google Drive'),
+                        icon: const Icon(Icons.add_to_drive),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

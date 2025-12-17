@@ -9,6 +9,7 @@ class UserModel {
   final String subscriptionTier;
   final int dailyAiUsageCount;
   final Timestamp? lastAiUsageDate;
+  final bool notificationsEnabled;
 
   UserModel({
     required this.userId,
@@ -19,6 +20,7 @@ class UserModel {
     this.subscriptionTier = 'Free',
     this.dailyAiUsageCount = 0,
     this.lastAiUsageDate,
+    this.notificationsEnabled = true,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +33,7 @@ class UserModel {
       'subscriptionTier': subscriptionTier,
       'dailyAiUsageCount': dailyAiUsageCount,
       'lastAiUsageDate': lastAiUsageDate,
+      'notificationsEnabled': notificationsEnabled,
     };
   }
 
@@ -46,6 +49,7 @@ class UserModel {
       subscriptionTier: json['subscriptionTier'] ?? 'Free',
       dailyAiUsageCount: json['dailyAiUsageCount'] ?? 0,
       lastAiUsageDate: json['lastAiUsageDate'],
+      notificationsEnabled: json['notificationsEnabled'] ?? true,
     );
   }
 }
