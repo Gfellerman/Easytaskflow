@@ -3,12 +3,14 @@ class FileModel {
   final String fileName;
   final String fileUrl;
   final String fileType;
+  final String storageProvider; // 'internal', 'google_drive', etc.
 
   FileModel({
     required this.fileId,
     required this.fileName,
     required this.fileUrl,
     required this.fileType,
+    this.storageProvider = 'internal',
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +19,7 @@ class FileModel {
       'fileName': fileName,
       'fileUrl': fileUrl,
       'fileType': fileType,
+      'storageProvider': storageProvider,
     };
   }
 
@@ -28,6 +31,7 @@ class FileModel {
       fileName: json['fileName'] ?? '',
       fileUrl: json['fileUrl'] ?? '',
       fileType: json['fileType'] ?? '',
+      storageProvider: json['storageProvider'] ?? 'internal',
     );
   }
 }

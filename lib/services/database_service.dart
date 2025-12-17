@@ -191,6 +191,17 @@ class DatabaseService {
             .toList());
   }
 
+  Future<void> deleteFile(String projectId, String taskId, String fileId) async {
+    await _db
+        .collection('projects')
+        .doc(projectId)
+        .collection('tasks')
+        .doc(taskId)
+        .collection('files')
+        .doc(fileId)
+        .delete();
+  }
+
   Future<bool> checkAndIncrementAiUsage(String userId) async {
     final userDoc = await _db.collection('users').doc(userId).get();
     if (!userDoc.exists) return false;

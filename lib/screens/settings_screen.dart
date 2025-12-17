@@ -1,7 +1,7 @@
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
-import 'package:easy_task_flow/services/google_api_service.dart';
+import 'package:easy_task_flow/screens/integrations_screen.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -14,7 +14,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _authService = AuthService();
   final DatabaseService _databaseService = DatabaseService();
-  final GoogleApiService _googleApiService = GoogleApiService();
   final TextEditingController _nameController = TextEditingController();
 
   void _showProfileDialog() async {
@@ -110,34 +109,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          FutureBuilder<bool>(
-            future: _googleApiService.isSignedIn(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const ListTile(
-                  title: Text('Loading Google Account status...'),
-                  leading: CircularProgressIndicator(),
-                );
-              }
-              if (snapshot.hasData && snapshot.data!) {
-                return ListTile(
-                  title: const Text('Unlink Google Account'),
-                  leading: const Icon(Icons.link_off),
-                  onTap: () async {
-                    await _googleApiService.signOut();
-                    setState(() {});
-                  },
-                );
-              } else {
-                return ListTile(
-                  title: const Text('Link Google Account'),
-                  leading: const Icon(Icons.link),
-                  onTap: () async {
-                    await _googleApiService.signIn();
-                    setState(() {});
-                  },
-                );
-              }
+          ListTile(
+            title: const Text('Cloud Integrations'),
+            subtitle: const Text('Google Drive, OneDrive, etc.'),
+            leading: const Icon(Icons.cloud_sync),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const IntegrationsScreen()),
+              );
             },
           ),
           ListTile(

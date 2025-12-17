@@ -2,10 +2,10 @@ import 'package:easy_task_flow/models/file_model.dart';
 import 'package:easy_task_flow/models/task_model.dart';
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/database_service.dart';
-import 'package:easy_task_flow/services/google_api_service.dart';
+import 'package:easy_task_flow/services/google_drive_service.dart';
+import 'package:easy_task_flow/services/cloud_storage_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,7 +25,7 @@ class TaskDetailScreen extends StatefulWidget {
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final DatabaseService _databaseService = DatabaseService();
-  final GoogleApiService _googleApiService = GoogleApiService();
+  final GoogleDriveService _googleDriveService = GoogleDriveService();
   final TextEditingController _subtaskNameController = TextEditingController();
   final TextEditingController _subtaskDetailsController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -108,7 +108,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   void _uploadFile() async {
-    // withData: true ensures bytes are available (needed for Web)
     final result = await FilePicker.platform.pickFiles(withData: true);
     if (result != null) {
       final file = result.files.single;
@@ -120,6 +119,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           fileName: file.name,
           fileUrl: fileUrl,
           fileType: file.extension ?? '',
+          storageProvider: 'internal',
         );
         await _databaseService.addFileToTask(widget.projectId, widget.task.taskId, newFile);
       } else {
@@ -130,6 +130,35 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
          }
       }
     }
+  }
+
+  void _showCloudPickerDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Provider'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.cloud_circle),
+                title: const Text('Google Drive'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showGoogleDrivePickerDialog();
+                },
+              ),
+              const ListTile(
+                leading: Icon(Icons.cloud_off),
+                title: Text('OneDrive (Coming Soon)'),
+                enabled: false,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showGoogleDrivePickerDialog() {
@@ -151,31 +180,54 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     ),
                     onSubmitted: (value) => setState(() {}),
                   ),
-                  FutureBuilder<drive.FileList>(
-                    future: _googleApiService.searchFiles(_searchController.text),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError || !snapshot.hasData || snapshot.data!.files == null) {
-                        return const Center(child: Text('Error loading files.'));
-                      }
-                      final files = snapshot.data!.files!;
-                      return SizedBox(
-                        height: 300,
-                        width: 300,
-                        child: ListView.builder(
+                  SizedBox(
+                    height: 300,
+                    width: 300,
+                    child: FutureBuilder<List<CloudFile>>(
+                      future: _googleDriveService.searchFiles(_searchController.text),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('Not Connected or Error'),
+                                Text('${snapshot.error}', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    try {
+                                      await _googleDriveService.connect();
+                                      setState((){});
+                                    } catch(e) {
+                                      debugPrint('Auth Error: $e');
+                                    }
+                                  },
+                                  child: const Text('Connect Google Drive'),
+                                )
+                              ],
+                            ),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No files found.'));
+                        }
+                        final files = snapshot.data!;
+                        return ListView.builder(
                           itemCount: files.length,
                           itemBuilder: (context, index) {
                             final file = files[index];
                             return ListTile(
-                              title: Text(file.name ?? 'No name'),
+                              title: Text(file.name),
                               onTap: () async {
                                 final newFile = FileModel(
                                   fileId: const Uuid().v4(),
-                                  fileName: file.name!,
-                                  fileUrl: file.webViewLink!,
-                                  fileType: file.mimeType!,
+                                  fileName: file.name,
+                                  fileUrl: file.url,
+                                  fileType: file.mimeType,
+                                  storageProvider: 'google_drive',
                                 );
                                 await _databaseService.addFileToTask(
                                   widget.projectId,
@@ -187,9 +239,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                               },
                             );
                           },
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ],
               );
@@ -320,7 +372,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                               ? const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey)
                               : null,
                         ),
-                        subtitle: Text(subtask.subtaskDetails),
+                        subtitle: Text('${subtask.subtaskDetails} • ${subtask.status.replaceAll('_', ' ').toUpperCase()}'),
                         leading: IconButton(
                           icon: Icon(
                             subtask.isDone
@@ -375,13 +427,38 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           final file = files[index];
                           return ListTile(
                             title: Text(file.fileName),
-                            leading: const Icon(Icons.insert_drive_file),
+                            subtitle: Text(file.storageProvider.replaceAll('_', ' ').toUpperCase()),
+                            leading: Icon(
+                              file.storageProvider == 'google_drive' ? Icons.cloud : Icons.insert_drive_file
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                              onPressed: () async {
+                                // Confirmation
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Delete File'),
+                                    content: Text('Delete ${file.fileName}?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                      TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await _databaseService.deleteFile(widget.projectId, widget.task.taskId, file.fileId);
+                                }
+                              },
+                            ),
                             onTap: () async {
                               final uri = Uri.parse(file.fileUrl);
                               if (await canLaunchUrl(uri)) {
                                 await launchUrl(uri);
                               } else {
-                                throw 'Could not launch ${file.fileUrl}';
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Could not open file.')),
+                                );
                               }
                             },
                           );
@@ -389,21 +466,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       );
                     },
                   ),
-                  floatingActionButton: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      FloatingActionButton.extended(
-                        onPressed: _uploadFile,
-                        label: const Text('Upload File'),
-                        icon: const Icon(Icons.attach_file),
-                      ),
-                      const SizedBox(height: 10),
-                      FloatingActionButton.extended(
-                        onPressed: _showGoogleDrivePickerDialog,
-                        label: const Text('Attach from Google Drive'),
-                        icon: const Icon(Icons.add_to_drive),
-                      ),
-                    ],
+                  floatingActionButton: FloatingActionButton.extended(
+                    onPressed: _showCloudPickerDialog, // Changed to show picker
+                    label: const Text('Attach File'),
+                    icon: const Icon(Icons.add),
                   ),
                 ),
               ],
