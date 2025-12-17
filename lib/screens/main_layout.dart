@@ -1,35 +1,30 @@
+import 'package:easy_task_flow/providers/navigation_provider.dart';
 import 'package:easy_task_flow/screens/dashboard_screen.dart';
 import 'package:easy_task_flow/screens/my_tasks_screen.dart';
 import 'package:easy_task_flow/screens/projects_screen.dart';
 import 'package:easy_task_flow/screens/settings_screen.dart';
 import 'package:easy_task_flow/utils/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MainLayout extends StatefulWidget {
+class MainLayout extends ConsumerWidget {
   const MainLayout({super.key});
-
-  @override
-  State<MainLayout> createState() => _MainLayoutState();
-}
-
-class _MainLayoutState extends State<MainLayout> {
-  int _selectedIndex = 0;
 
   static const List<Widget> _screens = <Widget>[
     DashboardScreen(),
     ProjectsScreen(),
     MyTasksScreen(),
-    SettingsScreen(), // Profile/Settings
+    SettingsScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(navigationIndexProvider);
+
+    void onItemTapped(int index) {
+      ref.read(navigationIndexProvider.notifier).state = index;
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Desktop / Wide Tablet Layout
@@ -38,8 +33,8 @@ class _MainLayoutState extends State<MainLayout> {
             body: Row(
               children: [
                 NavigationRail(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: _onItemTapped,
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: onItemTapped,
                   backgroundColor: AppTheme.backgroundDark,
                   indicatorColor: AppTheme.primaryColor,
                   selectedIconTheme: const IconThemeData(color: Colors.white),
@@ -47,7 +42,7 @@ class _MainLayoutState extends State<MainLayout> {
                   selectedLabelTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
                   labelType: NavigationRailLabelType.all,
-                  extended: constraints.maxWidth > 1100, // Expand rail on very large screens
+                  extended: constraints.maxWidth > 1100,
                   leading: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: Icon(Icons.task_alt, color: AppTheme.primaryColor, size: 32),
@@ -79,7 +74,7 @@ class _MainLayoutState extends State<MainLayout> {
                 const VerticalDivider(thickness: 1, width: 1),
                 // Main Content
                 Expanded(
-                  child: _screens[_selectedIndex],
+                  child: _screens[selectedIndex],
                 ),
               ],
             ),
@@ -88,10 +83,10 @@ class _MainLayoutState extends State<MainLayout> {
 
         // Mobile / Tablet Layout
         return Scaffold(
-          body: _screens[_selectedIndex],
+          body: _screens[selectedIndex],
           bottomNavigationBar: NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onItemTapped,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onItemTapped,
             destinations: const <NavigationDestination>[
               NavigationDestination(
                 icon: Icon(Icons.home_outlined),

@@ -88,6 +88,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   final newSubtask = SubtaskModel(
                     subtaskName: _subtaskNameController.text,
                     subtaskDetails: _subtaskDetailsController.text,
+                    status: 'todo',
                   );
                   final updatedSubtasks = List<SubtaskModel>.from(currentTask.subtasks)
                     ..add(newSubtask);
@@ -107,17 +108,27 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   void _uploadFile() async {
-    final result = await FilePicker.platform.pickFiles();
+    // withData: true ensures bytes are available (needed for Web)
+    final result = await FilePicker.platform.pickFiles(withData: true);
     if (result != null) {
       final file = result.files.single;
-      final fileUrl = await _databaseService.uploadFile(file.path!, file.name);
-      final newFile = FileModel(
-        fileId: const Uuid().v4(),
-        fileName: file.name,
-        fileUrl: fileUrl,
-        fileType: file.extension ?? '',
-      );
-      await _databaseService.addFileToTask(widget.projectId, widget.task.taskId, newFile);
+
+      if (file.bytes != null) {
+        final fileUrl = await _databaseService.uploadFile(file.bytes!, file.name);
+        final newFile = FileModel(
+          fileId: const Uuid().v4(),
+          fileName: file.name,
+          fileUrl: fileUrl,
+          fileType: file.extension ?? '',
+        );
+        await _databaseService.addFileToTask(widget.projectId, widget.task.taskId, newFile);
+      } else {
+         if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Error reading file data.')),
+           );
+         }
+      }
     }
   }
 
@@ -192,8 +203,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<TaskModel>(
-      // Use the injected projectId from task if available, or widget.projectId
-      // Actually widget.task.projectId might be set, but widget.projectId is passed explicitly.
       stream: _databaseService
           .getTasks(widget.projectId)
           .map((tasks) => tasks.firstWhere((task) => task.taskId == widget.task.taskId)),
@@ -282,23 +291,36 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     itemBuilder: (context, index) {
                       final subtask = task.subtasks[index];
                       return ListTile(
-                        title: Text(subtask.subtaskName),
+                        title: Text(
+                          subtask.subtaskName,
+                          style: subtask.isDone
+                              ? const TextStyle(decoration: TextDecoration.lineThrough, color: Colors.grey)
+                              : null,
+                        ),
                         subtitle: Text(subtask.subtaskDetails),
-                        // Maybe add completion toggle for subtasks too?
-                        leading: Checkbox(
-                          value: subtask.isCompleted,
-                          onChanged: (val) {
-                             if (val != null) {
-                               final updatedSubtasks = List<SubtaskModel>.from(task.subtasks);
-                               final updatedSubtask = SubtaskModel(
-                                  subtaskName: subtask.subtaskName,
-                                  subtaskDetails: subtask.subtaskDetails,
-                                  isCompleted: val
-                               );
-                               updatedSubtasks[index] = updatedSubtask;
-                               final updatedTask = task.copyWith(subtasks: updatedSubtasks);
-                               _databaseService.updateTask(widget.projectId, updatedTask);
-                             }
+                        leading: IconButton(
+                          icon: Icon(
+                            subtask.isDone
+                                ? Icons.check_circle
+                                : (subtask.isInProgress
+                                    ? Icons.timelapse
+                                    : Icons.radio_button_unchecked),
+                            color: subtask.isDone
+                                ? Colors.green
+                                : (subtask.isInProgress ? Colors.orange : Colors.grey),
+                          ),
+                          onPressed: () {
+                            String newStatus = 'todo';
+                            if (subtask.isTodo) newStatus = 'in_progress';
+                            else if (subtask.isInProgress) newStatus = 'done';
+                            else newStatus = 'todo';
+
+                            final updatedSubtasks = List<SubtaskModel>.from(task.subtasks);
+                            final updatedSubtask = subtask.copyWith(status: newStatus);
+                            updatedSubtasks[index] = updatedSubtask;
+
+                            final updatedTask = task.copyWith(subtasks: updatedSubtasks);
+                            _databaseService.updateTask(widget.projectId, updatedTask);
                           },
                         ),
                       );

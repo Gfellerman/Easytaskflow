@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
@@ -148,9 +148,7 @@ class DatabaseService {
   }
 
   // File methods
-  Future<String> uploadFile(String filePath, String fileName) async {
-    final file = File(filePath);
-
+  Future<String> uploadFile(Uint8List fileBytes, String fileName) async {
     // Generate a unique ID to prevent overwrites and path traversal
     final uniqueId = const Uuid().v4();
 
@@ -164,7 +162,7 @@ class DatabaseService {
     final uniqueFileName = '$uniqueId$extension';
     final ref = _storage.ref().child('task_documents/$uniqueFileName');
 
-    final uploadTask = await ref.putFile(file);
+    final uploadTask = await ref.putData(fileBytes);
     return await uploadTask.ref.getDownloadURL();
   }
 
