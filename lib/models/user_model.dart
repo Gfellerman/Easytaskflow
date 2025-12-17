@@ -10,6 +10,7 @@ class UserModel {
   final int dailyAiUsageCount;
   final Timestamp? lastAiUsageDate;
   final bool notificationsEnabled;
+  final String? geminiApiKey;
 
   UserModel({
     required this.userId,
@@ -21,6 +22,7 @@ class UserModel {
     this.dailyAiUsageCount = 0,
     this.lastAiUsageDate,
     this.notificationsEnabled = true,
+    this.geminiApiKey,
   });
 
   Map<String, dynamic> toMap() {
@@ -34,6 +36,7 @@ class UserModel {
       'dailyAiUsageCount': dailyAiUsageCount,
       'lastAiUsageDate': lastAiUsageDate,
       'notificationsEnabled': notificationsEnabled,
+      'geminiApiKey': geminiApiKey,
     };
   }
 
@@ -50,6 +53,7 @@ class UserModel {
       dailyAiUsageCount: json['dailyAiUsageCount'] ?? 0,
       lastAiUsageDate: json['lastAiUsageDate'],
       notificationsEnabled: json['notificationsEnabled'] ?? true,
+      geminiApiKey: json['geminiApiKey'],
     );
   }
 
@@ -63,6 +67,7 @@ class UserModel {
     int? dailyAiUsageCount,
     Timestamp? lastAiUsageDate,
     bool? notificationsEnabled,
+    String? geminiApiKey,
   }) {
     return UserModel(
       userId: userId ?? this.userId,
@@ -74,6 +79,7 @@ class UserModel {
       dailyAiUsageCount: dailyAiUsageCount ?? this.dailyAiUsageCount,
       lastAiUsageDate: lastAiUsageDate ?? this.lastAiUsageDate,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      geminiApiKey: geminiApiKey ?? this.geminiApiKey,
     );
   }
 }

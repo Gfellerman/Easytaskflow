@@ -7,29 +7,24 @@ class AiService {
   // Ideally, this should be built with --dart-define=GEMINI_API_KEY=your_key
   // or fetched from a secure remote config (Firebase Remote Config).
   // For this "free" version, we hardcode or use environment.
-  static const String _apiKey = String.fromEnvironment(
+  static const String _defaultApiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
     defaultValue: 'YOUR_SECURE_API_KEY_HERE'
   );
 
-  late final GenerativeModel _model;
+  Future<Map<String, dynamic>> parseTaskFromNaturalLanguage(String input, {String? userApiKey}) async {
+    String finalKey = userApiKey ?? _defaultApiKey;
 
-  AiService() {
-    // Only initialize if we have a valid-looking key to avoid crashes on init
-    if (_apiKey != 'YOUR_SECURE_API_KEY_HERE') {
-      _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: _apiKey,
-      );
-    }
-  }
-
-  Future<Map<String, dynamic>> parseTaskFromNaturalLanguage(String input) async {
     // Check if key is the placeholder
-    if (_apiKey == 'YOUR_SECURE_API_KEY_HERE') {
+    if (finalKey == 'YOUR_SECURE_API_KEY_HERE' || finalKey.isEmpty) {
       // Return a special error map that the UI can detect
       return {'error': 'AI_NOT_CONFIGURED'};
     }
+
+    final model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: finalKey,
+    );
 
     final content = [Content.text('''
       Parse the following task description into a JSON object with keys:
@@ -42,7 +37,7 @@ class AiService {
     ''')];
 
     try {
-      final response = await _model.generateContent(content);
+      final response = await model.generateContent(content);
       final text = response.text;
       if (text == null) return {};
 

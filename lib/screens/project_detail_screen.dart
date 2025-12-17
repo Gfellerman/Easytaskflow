@@ -60,7 +60,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       return;
     }
 
-    final result = await _aiService.parseTaskFromNaturalLanguage(input);
+    final userData = await _databaseService.getUserById(user.uid);
+    final result = await _aiService.parseTaskFromNaturalLanguage(input, userApiKey: userData?.geminiApiKey);
 
     if (result.containsKey('error') && result['error'] == 'AI_NOT_CONFIGURED') {
       if (mounted) {

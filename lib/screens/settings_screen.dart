@@ -1,6 +1,7 @@
 import 'package:easy_task_flow/models/user_model.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:easy_task_flow/services/database_service.dart';
+import 'package:easy_task_flow/screens/ai_settings_screen.dart';
 import 'package:easy_task_flow/screens/integrations_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -87,6 +88,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() {});
                   }
                 },
+              );
+            },
+          ),
+          ListTile(
+            title: const Text('AI Configuration'),
+            leading: const Icon(Icons.auto_awesome),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AiSettingsScreen()),
               );
             },
           ),
