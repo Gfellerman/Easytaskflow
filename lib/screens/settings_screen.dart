@@ -75,12 +75,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.person),
             onTap: _showProfileDialog,
           ),
-          ListTile(
-            title: const Text('Notification Preferences'),
-            leading: const Icon(Icons.notifications),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon!')),
+          FutureBuilder<UserModel?>(
+            future: _databaseService.getUserById(_authService.currentUser?.uid ?? ''),
+            builder: (context, snapshot) {
+              final userModel = snapshot.data;
+              // If loading or error, default to disabled or loading state
+              final isEnabled = userModel?.notificationsEnabled ?? false;
+
+              return SwitchListTile(
+                title: const Text('Notification Preferences'),
+                subtitle: const Text('Enable notifications'),
+                secondary: const Icon(Icons.notifications),
+                value: isEnabled,
+                onChanged: (val) async {
+                  if (userModel != null) {
+                    // Manual copyWith since UserModel doesn't have it yet?
+                    // Actually UserModel doesn't have copyWith in the file I read.
+                    // I'll create a new instance manually.
+                    final updatedUser = UserModel(
+                      userId: userModel.userId,
+                      name: userModel.name,
+                      email: userModel.email,
+                      phoneNumber: userModel.phoneNumber,
+                      profilePictureUrl: userModel.profilePictureUrl,
+                      subscriptionTier: userModel.subscriptionTier,
+                      dailyAiUsageCount: userModel.dailyAiUsageCount,
+                      lastAiUsageDate: userModel.lastAiUsageDate,
+                      notificationsEnabled: val,
+                    );
+                    await _databaseService.updateUser(updatedUser);
+                    setState(() {});
+                  }
+                },
               );
             },
           ),

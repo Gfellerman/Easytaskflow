@@ -7,7 +7,7 @@ class TaskModel {
   final List<String> assignees;
   final String taskDetails;
   final List<SubtaskModel> subtasks;
-  final bool isCompleted;
+  final String status; // 'todo', 'in_progress', 'done'
   final Timestamp createdAt;
   final String projectId;
 
@@ -18,7 +18,7 @@ class TaskModel {
     required this.assignees,
     required this.taskDetails,
     required this.subtasks,
-    this.isCompleted = false,
+    this.status = 'todo',
     Timestamp? createdAt,
     this.projectId = '',
   }) : createdAt = createdAt ?? Timestamp.now();
@@ -31,7 +31,7 @@ class TaskModel {
       'assignees': assignees,
       'taskDetails': taskDetails,
       'subtasks': subtasks.map((subtask) => subtask.toMap()).toList(),
-      'isCompleted': isCompleted,
+      'status': status,
       'createdAt': createdAt,
       'projectId': projectId,
     };
@@ -40,6 +40,12 @@ class TaskModel {
   Map<String, dynamic> toJson() => toMap();
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    // Migration logic: Map old 'isCompleted' to status if 'status' is missing
+    String parsedStatus = json['status'] ?? 'todo';
+    if (json['status'] == null && json.containsKey('isCompleted')) {
+      parsedStatus = json['isCompleted'] == true ? 'done' : 'todo';
+    }
+
     return TaskModel(
       taskId: json['taskId'] ?? '',
       taskName: json['taskName'] ?? '',
@@ -50,7 +56,7 @@ class TaskModel {
               ?.map((e) => SubtaskModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      isCompleted: json['isCompleted'] ?? false,
+      status: parsedStatus,
       // Default to epoch for existing tasks so they don't appear as "Recent"
       createdAt: json['createdAt'] as Timestamp? ?? Timestamp.fromMicrosecondsSinceEpoch(0),
       projectId: json['projectId'] ?? '',
@@ -65,7 +71,7 @@ class TaskModel {
     List<String>? assignees,
     String? taskDetails,
     List<SubtaskModel>? subtasks,
-    bool? isCompleted,
+    String? status,
     Timestamp? createdAt,
     String? projectId,
   }) {
@@ -76,11 +82,16 @@ class TaskModel {
       assignees: assignees ?? this.assignees,
       taskDetails: taskDetails ?? this.taskDetails,
       subtasks: subtasks ?? this.subtasks,
-      isCompleted: isCompleted ?? this.isCompleted,
+      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       projectId: projectId ?? this.projectId,
     );
   }
+
+  // Helpers for status checks
+  bool get isDone => status == 'done';
+  bool get isInProgress => status == 'in_progress';
+  bool get isTodo => status == 'todo';
 }
 
 class SubtaskModel {

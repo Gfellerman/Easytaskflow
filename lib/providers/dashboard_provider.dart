@@ -112,10 +112,10 @@ final dashboardStatsProvider = Provider.autoDispose<DashboardStats>((ref) {
       ? <TaskModel>[]
       : allTasks.where((t) => t.assignees.contains(user.uid)).toList();
 
-  final tasksDue = myTasks.where((t) => !t.isCompleted).length;
+  final tasksDue = myTasks.where((t) => !t.isDone).length;
 
   // Upcoming: My tasks, not completed, sorted by Due Date (ascending)
-  final upcoming = myTasks.where((t) => !t.isCompleted).toList()
+  final upcoming = myTasks.where((t) => !t.isDone).toList()
     ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
   // Recent Activity: All tasks (team activity), sorted by CreatedAt (descending)
