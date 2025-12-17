@@ -97,29 +97,50 @@ class TaskModel {
 class SubtaskModel {
   final String subtaskName;
   final String subtaskDetails;
-  final bool isCompleted;
+  final String status; // 'todo', 'in_progress', 'done'
 
   SubtaskModel({
     required this.subtaskName,
     required this.subtaskDetails,
-    this.isCompleted = false,
+    this.status = 'todo',
   });
 
   Map<String, dynamic> toMap() {
     return {
       'subtaskName': subtaskName,
       'subtaskDetails': subtaskDetails,
-      'isCompleted': isCompleted,
+      'status': status,
     };
   }
 
   Map<String, dynamic> toJson() => toMap();
 
   factory SubtaskModel.fromJson(Map<String, dynamic> json) {
+    String parsedStatus = json['status'] ?? 'todo';
+    if (json['status'] == null && json.containsKey('isCompleted')) {
+      parsedStatus = json['isCompleted'] == true ? 'done' : 'todo';
+    }
     return SubtaskModel(
       subtaskName: json['subtaskName'] ?? '',
       subtaskDetails: json['subtaskDetails'] ?? '',
-      isCompleted: json['isCompleted'] ?? false,
+      status: parsedStatus,
+    );
+  }
+
+  // Helpers
+  bool get isDone => status == 'done';
+  bool get isInProgress => status == 'in_progress';
+  bool get isTodo => status == 'todo';
+
+  SubtaskModel copyWith({
+    String? subtaskName,
+    String? subtaskDetails,
+    String? status,
+  }) {
+    return SubtaskModel(
+      subtaskName: subtaskName ?? this.subtaskName,
+      subtaskDetails: subtaskDetails ?? this.subtaskDetails,
+      status: status ?? this.status,
     );
   }
 }

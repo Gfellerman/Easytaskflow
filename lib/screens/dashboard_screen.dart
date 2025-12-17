@@ -1,4 +1,5 @@
 import 'package:easy_task_flow/providers/dashboard_provider.dart';
+import 'package:easy_task_flow/providers/navigation_provider.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,6 +64,7 @@ class DashboardScreen extends ConsumerWidget {
                         value: '${stats.tasksDueCount}',
                         icon: Icons.task_alt,
                         color: Colors.orange,
+                        onTap: () => ref.read(navigationIndexProvider.notifier).state = 2,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -72,6 +74,7 @@ class DashboardScreen extends ConsumerWidget {
                         value: '${stats.projectCount}',
                         icon: Icons.folder_open,
                         color: Colors.blue,
+                        onTap: () => ref.read(navigationIndexProvider.notifier).state = 1,
                       ),
                     ),
                     if (constraints.maxWidth > 800) ...[
@@ -146,19 +149,23 @@ class _OverviewCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
+  final VoidCallback? onTap;
 
   const _OverviewCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
@@ -169,10 +176,10 @@ class _OverviewCard extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -189,14 +196,15 @@ class _OverviewCard extends StatelessWidget {
               color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).textTheme.bodySmall?.color,
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
