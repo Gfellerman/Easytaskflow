@@ -85,9 +85,11 @@ class DatabaseService {
         .doc(projectId)
         .collection('tasks')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => TaskModel.fromJson(doc.data()))
-            .toList());
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final task = TaskModel.fromJson(doc.data());
+              // Inject projectId for context
+              return task.copyWith(projectId: projectId);
+            }).toList());
   }
 
   Future<void> updateTask(String projectId, TaskModel task) async {

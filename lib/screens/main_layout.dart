@@ -1,4 +1,5 @@
 import 'package:easy_task_flow/screens/dashboard_screen.dart';
+import 'package:easy_task_flow/screens/my_tasks_screen.dart';
 import 'package:easy_task_flow/screens/projects_screen.dart';
 import 'package:easy_task_flow/screens/settings_screen.dart';
 import 'package:easy_task_flow/utils/app_theme.dart';
@@ -17,7 +18,7 @@ class _MainLayoutState extends State<MainLayout> {
   static const List<Widget> _screens = <Widget>[
     DashboardScreen(),
     ProjectsScreen(),
-    Center(child: Text("My Tasks (Coming Soon)")), // Tasks placeholder
+    MyTasksScreen(),
     SettingsScreen(), // Profile/Settings
   ];
 
