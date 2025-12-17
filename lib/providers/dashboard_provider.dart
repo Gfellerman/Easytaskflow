@@ -80,24 +80,41 @@ final allTasksProvider =
   return AllTasksNotifier(db, projects);
 });
 
+// Dashboard Item (Task or Subtask)
+class DashboardItem {
+  final String name;
+  final String parentName; // If subtask
+  final DateTime date;
+  final TaskModel task; // Parent task
+  final bool isSubtask;
+
+  DashboardItem({
+    required this.name,
+    this.parentName = '',
+    required this.date,
+    required this.task,
+    this.isSubtask = false,
+  });
+}
+
 // Dashboard Statistics Model
 class DashboardStats {
   final int projectCount;
   final int tasksDueCount;
-  final List<TaskModel> upcomingDeadlines;
+  final List<DashboardItem> upcomingItems;
   final List<TaskModel> recentActivity;
 
   DashboardStats({
     required this.projectCount,
     required this.tasksDueCount,
-    required this.upcomingDeadlines,
+    required this.upcomingItems,
     required this.recentActivity,
   });
 
   const DashboardStats.empty()
       : projectCount = 0,
         tasksDueCount = 0,
-        upcomingDeadlines = const [],
+        upcomingItems = const [],
         recentActivity = const [];
 }
 
@@ -112,20 +129,48 @@ final dashboardStatsProvider = Provider.autoDispose<DashboardStats>((ref) {
       ? <TaskModel>[]
       : allTasks.where((t) => t.assignees.contains(user.uid)).toList();
 
-  final tasksDue = myTasks.where((t) => !t.isDone).length;
+  final List<DashboardItem> allDueItems = [];
 
-  // Upcoming: My tasks, not completed, sorted by Due Date (ascending)
-  final upcoming = myTasks.where((t) => !t.isDone).toList()
-    ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+  for (final task in myTasks) {
+    // Add Main Task if not done
+    if (!task.isDone) {
+      allDueItems.add(DashboardItem(
+        name: task.taskName,
+        date: task.dueDate.toDate(),
+        task: task,
+        isSubtask: false,
+      ));
+    }
+
+    // Add Subtasks if not done
+    for (final sub in task.subtasks) {
+      if (!sub.isDone) {
+        allDueItems.add(DashboardItem(
+          name: sub.subtaskName,
+          parentName: task.taskName,
+          date: task.dueDate.toDate(), // Inherit due date
+          task: task,
+          isSubtask: true,
+        ));
+      }
+    }
+  }
+
+  final tasksDue = allDueItems.length;
+
+  // Upcoming: sorted by Due Date (ascending)
+  allDueItems.sort((a, b) => a.date.compareTo(b.date));
+  final upcoming = allDueItems;
 
   // Recent Activity: All tasks (team activity), sorted by CreatedAt (descending)
+  // We exclude subtasks from this list for simplicity (as they don't have createdAt)
   final recent = List<TaskModel>.from(allTasks)
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   return DashboardStats(
     projectCount: projects.length,
     tasksDueCount: tasksDue,
-    upcomingDeadlines: upcoming.take(5).toList(),
+    upcomingItems: upcoming.take(5).toList(),
     recentActivity: recent.take(5).toList(),
   );
 });

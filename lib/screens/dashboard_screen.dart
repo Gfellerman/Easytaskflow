@@ -1,5 +1,6 @@
 import 'package:easy_task_flow/providers/dashboard_provider.dart';
 import 'package:easy_task_flow/providers/navigation_provider.dart';
+import 'package:easy_task_flow/screens/task_detail_screen.dart';
 import 'package:easy_task_flow/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,17 +91,30 @@ class DashboardScreen extends ConsumerWidget {
                 // Upcoming Deadlines
                 _SectionHeader(title: 'Upcoming Deadlines'),
                 const SizedBox(height: 12),
-                if (stats.upcomingDeadlines.isEmpty)
+                if (stats.upcomingItems.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Text('No upcoming deadlines.'),
                   )
                 else
-                  ...stats.upcomingDeadlines.map((task) => Card(
+                  ...stats.upcomingItems.map((item) => Card(
                     child: ListTile(
-                      title: Text(task.taskName),
-                      subtitle: Text('Due ${DateFormat.yMMMd().format(task.dueDate.toDate())}'),
+                      title: Text(item.name),
+                      subtitle: Text(item.isSubtask
+                          ? '${item.parentName} > Due ${DateFormat.yMMMd().format(item.date)}'
+                          : 'Due ${DateFormat.yMMMd().format(item.date)}'),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskDetailScreen(
+                                projectId: item.task.projectId,
+                                task: item.task,
+                              ),
+                            ),
+                          );
+                      },
                     ),
                   )),
 
@@ -120,6 +134,17 @@ class DashboardScreen extends ConsumerWidget {
                       leading: const Icon(Icons.add_circle_outline),
                       title: Text('New Task: ${task.taskName}'),
                       subtitle: Text('Added ${DateFormat.MMMd().add_jm().format(task.createdAt.toDate())}'),
+                      onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TaskDetailScreen(
+                                projectId: task.projectId,
+                                task: task,
+                              ),
+                            ),
+                          );
+                      },
                     ),
                   )),
               ],
@@ -166,36 +191,36 @@ class _OverviewCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.5)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 24),
             ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
+            const SizedBox(height: 16),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-          ),
             const SizedBox(height: 4),
             Text(
               title,

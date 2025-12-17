@@ -238,24 +238,47 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Status Dropdown
+                      // Status Cycling Icon
                       Row(
                         children: [
                           const Text('Status: ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           const SizedBox(width: 10),
-                          DropdownButton<String>(
-                            value: task.status,
-                            items: const [
-                              DropdownMenuItem(value: 'todo', child: Text('To Do')),
-                              DropdownMenuItem(value: 'in_progress', child: Text('In Progress')),
-                              DropdownMenuItem(value: 'done', child: Text('Done')),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                final updatedTask = task.copyWith(status: val);
+                          Tooltip(
+                            message: 'Tap to change status',
+                            child: IconButton(
+                              icon: Icon(
+                                task.isDone
+                                    ? Icons.check_circle
+                                    : (task.isInProgress
+                                        ? Icons.timelapse
+                                        : Icons.radio_button_unchecked),
+                                color: task.isDone
+                                    ? Colors.green
+                                    : (task.isInProgress ? Colors.orange : Colors.grey),
+                                size: 32,
+                              ),
+                              onPressed: () {
+                                String newStatus = 'todo';
+                                if (task.isTodo)
+                                  newStatus = 'in_progress';
+                                else if (task.isInProgress)
+                                  newStatus = 'done';
+                                else
+                                  newStatus = 'todo';
+
+                                final updatedTask = task.copyWith(status: newStatus);
                                 _databaseService.updateTask(widget.projectId, updatedTask);
-                              }
-                            },
+                              },
+                            ),
+                          ),
+                          Text(
+                            task.status.replaceAll('_', ' ').toUpperCase(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: task.isDone
+                                  ? Colors.green
+                                  : (task.isInProgress ? Colors.orange : Colors.grey),
+                            ),
                           ),
                         ],
                       ),
