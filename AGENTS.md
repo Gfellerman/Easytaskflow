@@ -3,7 +3,7 @@
 ## 1. Project Overview
 - **App Name:** EasyTaskFlow
 - **Goal:** A collaborative project management app for Android, iOS, and Web. Users can create projects, assign tasks, set deadlines, and chat in real time.
-- **Current Status:** Step 3 Complete (AI Quick Add).
+- **Current Status:** Phase 1 Complete (Visuals, Auth, Integrations). Phase 2 (AI) Infrastructure Ready.
 
 ## 2. User Context (CRITICAL)
 - **Role:** The Product Owner is **NOT a coder**.
@@ -23,9 +23,10 @@
 - **Frontend:** Flutter (Dart)
 - **Platforms:** Android, iOS, Web.
 - **Backend:** Firebase (Auth, Firestore, Storage).
-- **State Management:** Mixed (Riverpod + `setState`) — **be careful**, this is a known source of bugs.
+- **State Management:** Mixed (Riverpod + `setState`). **Riverpod** is the standard for new features.
 - **Key Dependencies:**
   - `firebase_core`, `cloud_firestore`
+  - `flutter_riverpod`
   - `google_mobile_ads` (AdMob)
   - `googleapis` (Calendar sync)
 
@@ -40,15 +41,10 @@
   - `flutter build apk`
 - If Flutter is not installed in the environment, install it or use the environment where these commands already work.
 
-## 5. Immediate Priority: FIX THE BUILD
-- **Do not add new features.**
-- **Primary goal:** Make `flutter build apk` succeed without errors or analyzer warnings.
-- **Known issues to address first:**
-  1. **Naming mismatch:** Some code calls `addUserToProject` but `database_service.dart` defines `addMemberToProject` (or similar). Align the call and definition so they use a single, consistent name.
-  2. **Android config:** `android/app/build.gradle.kts` is missing the `applicationId`. Set it to `com.easytaskflow.app` (or the correct ID if specified elsewhere).
-  3. **Pubspec:** Ensure `pubspec.yaml`:
-     - Uses `sdk: ">=3.0.0 <4.0.0"` (or another stable range).
-     - Uses up‑to‑date, non‑deprecated Firebase and Google packages when possible.
+## 5. Immediate Priority: ACTIVATE AI FEATURES
+- **Primary goal:** Connect the now-ready AI Infrastructure (BYOK) to the user-facing features (Smart Subtasks, NL Entry).
+- **Secondary goal:** Expand Cloud Integrations (Custom Providers).
+- **Maintenance:** Ensure `flutter build web` works (resolved file upload issues).
 
 ## 6. Coding Standards
 - **Project structure:** Flutter project is in the **root** directory.

@@ -32,6 +32,6 @@ This document outlines a strategy for integrating AI features into EasyTaskFlow,
 *   **Monetization:** This saves significant time and is a high-value "Pro" feature.
 
 ## Technical Roadmap
-1.  **Phase 1 (Now):** Implement Natural Language Entry using local logic (Zero cost).
-2.  **Phase 2 (Next):** Integrate Gemini API for Subtask Generation (Low cost/Free tier).
+1.  **Phase 1 (Completed):** AI Configuration Infrastructure (BYOK) and basic Natural Language Logic.
+2.  **Phase 2 (Immediate):** Activate Gemini API for "Smart Subtask Generation" and "Natural Language Entry" in UI using the user's API Key.
 3.  **Phase 3 (Future):** Train a custom model for project risk assessment (Paid tier).
